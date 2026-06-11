@@ -49,7 +49,7 @@ const Sidebar = () => {
             </nav>
 
             {/* ── Bottom section — reserved for user avatar / logout (later steps) ── */}
-            <div className="flex-shrink-0 border-t border-border py-3">
+            <div className="shrink-0 border-t border-border py-3">
                 {isOpen && (
                     <p className="text-xs text-text-secondary px-5">
                         Project Dashboard

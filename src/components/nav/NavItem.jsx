@@ -3,24 +3,18 @@
  * Renders icon always, label only when sidebar is expanded.
  * Provides a native tooltip when collapsed for accessibility.
  *
- * @param {React.ElementType} icon    - MUI icon component to render.
- * @param {string}            label   - Display name of the nav item.
- * @param {string}            path    - href target (swapped for NavLink in Step 8).
- * @param {boolean}           isOpen  - Whether the sidebar is expanded.
+ * @param {React.ElementType} icon   - MUI icon component to render.
+ * @param {string}            label  - Display name of the nav item.
+ * @param {string}            path   - href target (swapped for NavLink in Step 8).
+ * @param {boolean}           isOpen - Whether the sidebar is expanded.
  */
 const NavItem = ({ icon: Icon, label, path, isOpen }) => {
     return (
-
-            href={path}
-            title={!isOpen ? label : undefined}
-            className="
-                flex items-center gap-3
-                px-3 py-2.5 mx-2 rounded-lg
-                text-text-secondary
-                hover:bg-accent-subtle hover:text-accent
-                transition-colors duration-200
-                cursor-pointer
-            "
+        <a href={path} title={!isOpen ? label : undefined}
+        className= {`flex items-center gap-3
+            px-3 py-2.5 mx-2 rounded-lg text-text-secondary
+            hover:bg-accent-subtle hover:text-accent
+            transition-colors duration-200 cursor-pointer`}
         >
             {/* ── Icon — always visible ── */}
             <span className="shrink-0">
