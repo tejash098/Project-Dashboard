@@ -1,0 +1,45 @@
+@theme {
+  /* ─── Page background ─── */
+  --color-page-bg: #fdf8f3;
+
+  /* ─── Sidebar ─── */
+  --color-sidebar-bg: #f5ede2;
+
+  /* ─── TopBar ─── */
+  --color-topbar-bg: #fdf8f3;
+
+  /* ─── Surface (cards, modals) ─── */
+  --color-surface: #ffffff;
+
+  /* ─── Border ─── */
+  --color-border: #e0d0bc;
+
+  /* ─── Text ─── */
+  --color-text-primary: #3b2410;
+  --color-text-secondary: #8a6648;
+
+  /* ─── Accent (active nav, buttons, highlights) ─── */
+  --color-accent: #c07a3a;
+  --color-accent-subtle: #fdf0e0;
+
+  /* ─── Font ─── */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Fira Mono", ui-monospace, SF Mono, SF Mono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
+
+  /* ─── Layout ─── */
+  --sidebar-width-expanded: 14rem;
+  --sidebar-width-collapsed: 4rem;
+}
+
+/* ─── Dark mode overrides ─── */
+.dark {
+  --color-page-bg: #1a1008;
+  --color-sidebar-bg: #2c1a0a;
+  --color-topbar-bg: #231408;
+  --color-surface: #251608;
+  --color-border: #3d2410;
+  --color-text-primary: #e8d5b7;
+  --color-text-secondary: #a07850;
+  --color-accent: #d4914a;
+  --color-accent-subtle: #2e1c0c;
+}
