@@ -1,8 +1,10 @@
 import { useSidebar } from "../hooks/useSidebar";
+import Sidebar from "../components/nav/Sidebar";
 
 /**
  * Master layout shell for the dashboard.
- * Renders sidebar strip, topbar strip, and scrollable main content area.
+ * Owns sidebar width and transition — Sidebar fills the space,
+ * AppShell controls how much space it gets.
  *
  * @param {React.ReactNode} children - Page content rendered inside main area.
  */
@@ -12,14 +14,14 @@ const AppShell = ({ children }) => {
     return (
         <div className="flex h-screen overflow-hidden bg-page-bg">
 
-            {/* ── Sidebar strip (placeholder — replaced in Step 6) ── */}
+            {/* ── Sidebar wrapper — owns width and transition ── */}
             <div className={`
                 shrink-0 h-full
                 bg-sidebar-bg border-r border-border
                 transition-all duration-300 ease-in-out
                 ${isOpen ? "w-56" : "w-16"}
             `}>
-                {/* Sidebar component slots in here */}
+                <Sidebar />
             </div>
 
             {/* ── Content column ── */}
@@ -30,7 +32,7 @@ const AppShell = ({ children }) => {
                     h-16 shrink-0
                     bg-topbar-bg border-b border-border
                 ">
-                    {/* TopBar component slots in here */}
+                    {/* TopBar slots in here */}
                 </div>
 
                 {/* ── Scrollable main area ── */}
