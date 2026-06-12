@@ -8,22 +8,24 @@
  * @param {string}            path   - href target (swapped for NavLink in Step 8).
  * @param {boolean}           isOpen - Whether the sidebar is expanded.
  */
+import { SPACING, ROUNDED, TRANSITION, TYPOGRAPHY, SIZING, FLEX } from "../../config/constants";
+
 const NavItem = ({ icon: Icon, label, path, isOpen }) => {
     return (
         <a href={path} title={!isOpen ? label : undefined}
-        className= {`flex items-center gap-3
-            px-3 py-2.5 mx-2 rounded-lg text-text-secondary
+        className= {`${FLEX.CENTER} ${SPACING.GAP_3}
+            ${SPACING.PX_3} ${SPACING.PY_2_5} ${SPACING.MX_2} ${ROUNDED.MD} text-text-secondary
             hover:bg-accent-subtle hover:text-accent
-            transition-colors duration-200 cursor-pointer`}
+            ${TRANSITION.COLORS} ${SIZING.CURSOR_POINTER}`}
         >
             {/* ── Icon — always visible ── */}
-            <span className="shrink-0">
+            <span className={FLEX.SHRINK_0}>
                 <Icon sx={{ fontSize: 20 }} />
             </span>
 
             {/* ── Label — only visible when expanded ── */}
             {isOpen && (
-                <span className="text-sm font-medium whitespace-nowrap overflow-hidden">
+                <span className={`${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM} ${SIZING.WHITESPACE_NOWRAP} ${SIZING.OVERFLOW}`}>
                     {label}
                 </span>
             )}

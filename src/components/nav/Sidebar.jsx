@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSidebar } from "../../hooks/useSidebar";
 import NavItem from "./NavItem";
 import navItems from "../../config/navItems";
+import { HEIGHT, SPACING, ROUNDED, TRANSITION, TYPOGRAPHY, FLEX, SIZING, WIDTH } from "../../config/constants";
 
 /**
  * Sidebar navigation panel.
@@ -12,21 +13,21 @@ const Sidebar = () => {
     const { isOpen, toggle } = useSidebar();
 
     return (
-        <aside className="flex flex-col h-full w-full">
+        <aside className={`${FLEX.ROW} ${FLEX.COL} ${HEIGHT.FULL} ${WIDTH.FULL}`}>
 
             {/* ── Collapse toggle button ── */}
-            <div className="flex items-center h-12 shrink-0 border-b border-border px-3">
+            <div className={`${FLEX.CENTER} ${HEIGHT.SIDEBAR_TOGGLE} ${FLEX.SHRINK_0} border-b border-border ${SPACING.PX_3}`}>
                 <button
                     onClick={toggle}
                     title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-                    className="
-                        flex items-center justify-center
-                        w-8 h-8 rounded-lg
+                    className={`
+                        ${FLEX.CENTER_JUSTIFY}
+                        ${WIDTH.ICON_BUTTON} ${HEIGHT.ICON_BUTTON} ${ROUNDED.MD}
                         text-text-secondary
                         hover:bg-accent-subtle hover:text-accent
-                        transition-colors duration-200
-                        ml-auto
-                    "
+                        ${TRANSITION.COLORS}
+                        ${SPACING.ML_AUTO}
+                    `}
                 >
                     {isOpen
                         ? <ChevronLeft size={18} />
@@ -36,7 +37,7 @@ const Sidebar = () => {
             </div>
 
             {/* ── Nav items list ── */}
-            <nav className="flex-1 py-4 overflow-y-auto">
+            <nav className={`${FLEX.FLEX_1} ${SPACING.PY_4} ${SIZING.OVERFLOW_Y_AUTO}`}>
                 {navItems.map(({ id, icon, label, path }) => (
                     <NavItem
                         key={id}
@@ -49,9 +50,9 @@ const Sidebar = () => {
             </nav>
 
             {/* ── Bottom section — reserved for user avatar / logout (later steps) ── */}
-            <div className="shrink-0 border-t border-border py-3">
+            <div className={`${FLEX.SHRINK_0} border-t border-border ${SPACING.PY_3}`}>
                 {isOpen && (
-                    <p className="text-xs text-text-secondary px-5">
+                    <p className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary ${SPACING.PX_5}`}>
                         Project Dashboard
                     </p>
                 )}

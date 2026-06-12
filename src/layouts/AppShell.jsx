@@ -1,6 +1,7 @@
 import { useSidebar } from "../hooks/useSidebar";
 import Sidebar from "../components/nav/Sidebar";
 import TopBar from "../components/ui/TopBar";
+import { SIDEBAR, TRANSITION, HEIGHT, SIZING, FLEX, APPSHELL } from "../config/constants";
 
 /**
  * Master layout shell for the dashboard.
@@ -13,31 +14,28 @@ const AppShell = ({ children }) => {
     const { isOpen } = useSidebar();
 
     return (
-        <div className="flex h-screen overflow-hidden bg-page-bg">
-
+        <div className={`
+            ${FLEX.ROW} ${HEIGHT.SCREEN} ${SIZING.OVERFLOW_HIDDEN}
+            bg-page-bg ${TRANSITION.COLORS_SLOW}
+        `}>
             {/* ── Sidebar wrapper — owns width and transition ── */}
             <div className={`
-                shrink-0 h-full
+                ${FLEX.SHRINK_0} ${HEIGHT.FULL}
                 bg-sidebar-bg border-r border-border
-                transition-all duration-300 ease-in-out
-                ${isOpen ? "w-56" : "w-16"}
+                ${SIDEBAR.TRANSITION}
+                ${isOpen ? SIDEBAR.EXPANDED_WIDTH : SIDEBAR.COLLAPSED_WIDTH}
             `}>
                 <Sidebar />
             </div>
 
             {/* ── Content column ── */}
-            <div className="flex-1 min-w-0 flex flex-col">
+            <div className={`${FLEX.FLEX_1} ${FLEX.MIN_W_0} ${FLEX.ROW} ${FLEX.COL}`}>
 
-                {/* ── TopBar strip (placeholder — replaced in Step 7) ── */}
-                <div className="
-                    h-12 shrink-0
-                    bg-topbar-bg border-b border-border
-                ">
-                    <TopBar />
-                </div>
+                {/* ── TopBar ── */}
+                <TopBar />
 
                 {/* ── Scrollable main area ── */}
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className={`${FLEX.FLEX_1} ${SIZING.OVERFLOW_Y_AUTO} ${APPSHELL.MAIN_PADDING}`}>
                     {children}
                 </main>
 
