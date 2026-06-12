@@ -1,5 +1,6 @@
 import { useSidebar } from "../hooks/useSidebar";
 import Sidebar from "../components/nav/Sidebar";
+import TopBar from "../components/ui/TopBar";
 
 /**
  * Master layout shell for the dashboard.
@@ -29,10 +30,10 @@ const AppShell = ({ children }) => {
 
                 {/* ── TopBar strip (placeholder — replaced in Step 7) ── */}
                 <div className="
-                    h-16 shrink-0
+                    h-12 shrink-0
                     bg-topbar-bg border-b border-border
                 ">
-                    {/* TopBar slots in here */}
+                    <TopBar />
                 </div>
 
                 {/* ── Scrollable main area ── */}

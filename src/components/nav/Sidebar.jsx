@@ -15,7 +15,7 @@ const Sidebar = () => {
         <aside className="flex flex-col h-full w-full">
 
             {/* ── Collapse toggle button ── */}
-            <div className="flex items-center h-16 flex-shrink-0 border-b border-border px-3">
+            <div className="flex items-center h-12 shrink-0 border-b border-border px-3">
                 <button
                     onClick={toggle}
                     title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
