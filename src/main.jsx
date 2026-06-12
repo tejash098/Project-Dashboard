@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import ThemeProvider from './context/ThemeContext.jsx'
 import SidebarProvider from './context/SidebarContext.jsx'
+import { BrowserRouter } from "react-router-dom";
 
 /**
  * Application entry point.
@@ -12,10 +13,12 @@ import SidebarProvider from './context/SidebarContext.jsx'
  */
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ThemeProvider>
-      <SidebarProvider>
-        <App/>
-      </SidebarProvider>
-    </ThemeProvider>
+    <BrowserRouter>
+      <ThemeProvider>
+          <SidebarProvider>
+              <App />
+        </SidebarProvider>
+     </ThemeProvider>
+    </BrowserRouter>
   </StrictMode>,
 )
