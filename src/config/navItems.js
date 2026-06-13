@@ -10,9 +10,9 @@ import SettingsIcon from "@mui/icons-material/Settings";
  * @type {Array<{ id: number, label: string, path: string, icon: React.ElementType }>}
  */
 const navItems = [
-    { id: 1, label: "Dashboard",  path: "/",           icon: DashboardIcon },
-    { id: 2, label: "Analytics",  path: "/analytics",  icon: BarChartIcon  },
-    { id: 3, label: "Settings",   path: "/settings",   icon: SettingsIcon  },
+  { id: 1, label: "Dashboard", path: "/", icon: DashboardIcon },
+  { id: 2, label: "Analytics", path: "/analytics", icon: BarChartIcon },
+  { id: 3, label: "Settings", path: "/settings", icon: SettingsIcon },
 ];
 
 export default navItems;

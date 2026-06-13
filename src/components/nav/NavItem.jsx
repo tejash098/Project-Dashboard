@@ -1,5 +1,14 @@
 import { NavLink } from "react-router-dom";
-import { ICON_SIZE, ROUNDED, TRANSITION, SPACING, FLEX, TYPOGRAPHY, SIZING } from "../../config/constants";
+import {
+  ICON_SIZE,
+  ROUNDED,
+  TRANSITION,
+  SPACING,
+  FLEX,
+  TYPOGRAPHY,
+  SIZING,
+  BORDER,
+} from "../../config/constants";
 
 /**
  * Single navigation link in the sidebar.
@@ -12,35 +21,38 @@ import { ICON_SIZE, ROUNDED, TRANSITION, SPACING, FLEX, TYPOGRAPHY, SIZING } fro
  * @param {boolean}           isOpen - Whether the sidebar is expanded.
  */
 const NavItem = ({ icon: Icon, label, path, isOpen }) => {
-    return (
-        <NavLink
-            to={path}
-            title={!isOpen ? label : undefined}
-            className={({ isActive }) => `
+  return (
+    <NavLink
+      to={path}
+      title={!isOpen ? label : undefined}
+      className={({ isActive }) => `
                 ${FLEX.CENTER} ${SPACING.GAP_3}
-                ${SPACING.PX_3} ${SPACING.PY_2_5} ${SPACING.MX_2} ${ROUNDED.MD}
-                ${isActive
-                    ? "bg-accent-subtle text-accent border-l-3 border-accent"
-                    : `text-text-secondary hover:bg-accent-subtle hover:text-accent ${TRANSITION.COLORS}`
+                ${SPACING.PX_3} ${SPACING.PY_2_5} ${ROUNDED.MD} ${TRANSITION.COLORS} ${BORDER.LEFT_2}
+                ${
+                  isActive
+                    ? `bg-accent-subtle text-accent ${BORDER.ACCENT}`
+                    : `text-text-secondary hover:bg-accent-subtle hover:text-accent ${BORDER.TRANSPARENT}`
                 }
             `}
-        >
-            {/* ── Icon — always visible ── */}
-            <span className={FLEX.SHRINK_0}>
-                <Icon sx={{ fontSize: ICON_SIZE.MD }} />
-            </span>
+    >
+      {/* ── Icon — always visible ── */}
+      <span className={FLEX.SHRINK_0}>
+        <Icon sx={{ fontSize: ICON_SIZE.MD }} />
+      </span>
 
-            {/* ── Label — only visible when expanded ── */}
-            {isOpen && (
-                <span className={`
+      {/* ── Label — only visible when expanded ── */}
+      {isOpen && (
+        <span
+          className={`
                     ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM}
                     ${SIZING.WHITESPACE_NOWRAP} ${SIZING.OVERFLOW_HIDDEN}
-                `}>
-                    {label}
-                </span>
-            )}
-        </NavLink>
-    );
+                `}
+        >
+          {label}
+        </span>
+      )}
+    </NavLink>
+  );
 };
 
 export default NavItem;

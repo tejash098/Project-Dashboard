@@ -1,7 +1,7 @@
 import { useSidebar } from "../hooks/useSidebar";
 import Sidebar from "../components/nav/Sidebar";
 import TopBar from "../components/ui/TopBar";
-import { SIDEBAR, TRANSITION, HEIGHT, SIZING, FLEX, APPSHELL } from "../config/constants";
+import { SIDEBAR, TRANSITION, HEIGHT, SIZING, FLEX, APPSHELL, BORDER } from "../config/constants";
 
 /**
  * Master layout shell for the dashboard.
@@ -21,7 +21,7 @@ const AppShell = ({ children }) => {
             {/* ── Sidebar wrapper — owns width and transition ── */}
             <div className={`
                 ${FLEX.SHRINK_0} ${HEIGHT.FULL}
-                bg-sidebar-bg border-r border-border
+                bg-sidebar-bg ${BORDER.RIGHT}
                 ${SIDEBAR.TRANSITION}
                 ${isOpen ? SIDEBAR.EXPANDED_WIDTH : SIDEBAR.COLLAPSED_WIDTH}
             `}>

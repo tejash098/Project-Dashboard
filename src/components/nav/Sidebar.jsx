@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSidebar } from "../../hooks/useSidebar";
 import NavItem from "./NavItem";
 import navItems from "../../config/navItems";
-import { HEIGHT, SPACING, ROUNDED, TRANSITION, TYPOGRAPHY, FLEX, SIZING, WIDTH } from "../../config/constants";
+import { HEIGHT, SPACING, ROUNDED, TRANSITION, TYPOGRAPHY, FLEX, SIZING, WIDTH, BORDER } from "../../config/constants";
 
 /**
  * Sidebar navigation panel.
@@ -16,7 +16,7 @@ const Sidebar = () => {
         <aside className={`${FLEX.ROW} ${FLEX.COL} ${HEIGHT.FULL} ${WIDTH.FULL}`}>
 
             {/* ── Collapse toggle button ── */}
-            <div className={`${FLEX.CENTER} ${HEIGHT.SIDEBAR_TOGGLE} ${FLEX.SHRINK_0} border-b border-border ${SPACING.PX_3}`}>
+            <div className={`${FLEX.CENTER} ${HEIGHT.SIDEBAR_TOGGLE} ${FLEX.SHRINK_0} ${BORDER.BOTTOM} ${SPACING.PX_3}`}>
                 <button
                     onClick={toggle}
                     title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
@@ -50,7 +50,7 @@ const Sidebar = () => {
             </nav>
 
             {/* ── Bottom section — reserved for user avatar / logout (later steps) ── */}
-            <div className={`${FLEX.SHRINK_0} border-t border-border ${SPACING.PY_3}`}>
+            <div className={`${FLEX.SHRINK_0} ${BORDER.TOP} ${SPACING.PY_3}`}>
                 {isOpen && (
                     <p className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary ${SPACING.PX_5}`}>
                         Project Dashboard

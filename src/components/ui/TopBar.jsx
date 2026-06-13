@@ -1,5 +1,5 @@
 import ThemeToggle from "./ThemeToggle";
-import { HEIGHT, SPACING, TRANSITION, TYPOGRAPHY, FLEX, SIZING } from "../../config/constants";
+import { HEIGHT, SPACING, TRANSITION, TYPOGRAPHY, FLEX, SIZING, BORDER } from "../../config/constants";
 import { useLocation } from "react-router-dom";
 import navItems from "../../config/navItems";
 
@@ -17,7 +17,7 @@ const TopBar = () => {
         <header className={`
             ${HEIGHT.TOPBAR} ${SIZING.FLEX_SHRINK_0}
             ${FLEX.CENTER} ${SPACING.PX_6}
-            bg-topbar-bg border-b border-border
+            bg-topbar-bg ${BORDER.BOTTOM}
             ${TRANSITION.COLORS_SLOW}
         `}>
             {/* ── Left — page title ── */}
