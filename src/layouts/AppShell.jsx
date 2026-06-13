@@ -1,48 +1,84 @@
 import { useSidebar } from "../hooks/useSidebar";
 import Sidebar from "../components/nav/Sidebar";
 import TopBar from "../components/ui/TopBar";
-import { SIDEBAR, TRANSITION, HEIGHT, SIZING, FLEX, APPSHELL, BORDER } from "../config/constants";
+import {
+  SIDEBAR,
+  TRANSITION,
+  HEIGHT,
+  SIZING,
+  FLEX,
+  APPSHELL,
+  BORDER,
+  DRAWER,
+  Z_INDEX,
+  A11Y,
+} from "../config/constants";
 
 /**
  * Master layout shell for the dashboard.
- * Owns sidebar width and transition — Sidebar fills the space,
- * AppShell controls how much space it gets.
+ * Desktop: sidebar is part of the layout flow, toggles wide/narrow.
+ * Mobile: sidebar is a fixed drawer that slides over content with a backdrop.
  *
  * @param {React.ReactNode} children - Page content rendered inside main area.
  */
 const AppShell = ({ children }) => {
-    const { isOpen } = useSidebar();
+  const { isOpen, toggle } = useSidebar();
 
-    return (
-        <div className={`
+  return (
+    <div
+      className={`
             ${FLEX.ROW} ${HEIGHT.SCREEN} ${SIZING.OVERFLOW_HIDDEN}
             bg-page-bg ${TRANSITION.COLORS_SLOW}
-        `}>
-            {/* ── Sidebar wrapper — owns width and transition ── */}
-            <div className={`
-                ${FLEX.SHRINK_0} ${HEIGHT.FULL}
-                bg-sidebar-bg ${BORDER.RIGHT}
-                ${SIDEBAR.TRANSITION}
-                ${isOpen ? SIDEBAR.EXPANDED_WIDTH : SIDEBAR.COLLAPSED_WIDTH}
-            `}>
-                <Sidebar />
-            </div>
+        `}
+    >
+      {/* ── Backdrop — mobile only, when drawer is open ── */}
+      {isOpen && (
+        <div
+          onClick={toggle}
+          aria-hidden="true"
+          className={`
+                        fixed inset-0 bg-black/50
+                        ${Z_INDEX.BACKDROP} md:hidden
+                        ${A11Y.MOTION_SAFE}
+                    `}
+        />
+      )}
 
-            {/* ── Content column ── */}
-            <div className={`${FLEX.FLEX_1} ${FLEX.MIN_W_0} ${FLEX.ROW} ${FLEX.COL}`}>
+      {/* ── Sidebar wrapper ──
+         Desktop: static, width toggles (w-56 / w-16).
+          Mobile: fixed drawer (w-64), slides via translate-x. */}
+      <div
+        className={`
+        h-full bg-sidebar-bg border-r border-border
+        fixed top-0 left-0 z-40
+        md:static md:z-auto md:flex-shrink-0
+        w-64
+        transition-transform md:transition-all duration-300 ease-in-out
+        motion-reduce:transition-none
+        ${
+          isOpen
+            ? "translate-x-0 md:w-56"
+            : "-translate-x-full md:translate-x-0 md:w-16"
+        }
+    `}
+      >
+        <Sidebar />
+      </div>
 
-                {/* ── TopBar ── */}
-                <TopBar />
+      {/* ── Content column ── */}
+      <div className={`${FLEX.FLEX_1} ${FLEX.MIN_W_0} ${FLEX.ROW} ${FLEX.COL}`}>
+        {/* ── TopBar ── */}
+        <TopBar />
 
-                {/* ── Scrollable main area ── */}
-                <main className={`${FLEX.FLEX_1} ${SIZING.OVERFLOW_Y_AUTO} ${APPSHELL.MAIN_PADDING}`}>
-                    {children}
-                </main>
-
-            </div>
-
-        </div>
-    );
+        {/* ── Scrollable main area ── */}
+        <main
+          className={`${FLEX.FLEX_1} ${SIZING.OVERFLOW_Y_AUTO} ${APPSHELL.MAIN_PADDING}`}
+        >
+          {children}
+        </main>
+      </div>
+    </div>
+  );
 };
 
 export default AppShell;

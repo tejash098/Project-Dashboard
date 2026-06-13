@@ -60,6 +60,7 @@ export const SPACING = {
   MT_2: "mt-2",
   MB_6: "mb-6",
   GAP_4: "gap-4",
+  MR_4: "mr-4",
 };
 
 // ── Layout heights ───────────────────────────────────────────
@@ -125,4 +126,26 @@ export const GRID = {
 // New group for max width
 export const CONTAINER = {
     MAX_W: "max-w-7xl mx-auto",
+};
+
+
+// New group — z-index layers
+export const Z_INDEX = {
+    DRAWER: "z-40",
+    BACKDROP: "z-30",
+};
+
+// New group — responsive drawer behavior
+export const DRAWER = {
+    MOBILE_WIDTH: "w-64",
+    BASE: "fixed top-0 left-0 h-full md:static md:translate-x-0 md:z-auto",
+    OPEN: "translate-x-0",
+    CLOSED: "-translate-x-full",
+    TRANSITION: "transition-transform md:transition-all duration-300 ease-in-out",
+};
+
+// New group — focus accessibility (reuse everywhere)
+export const A11Y = {
+    FOCUS_RING: "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none",
+    MOTION_SAFE: "motion-reduce:transition-none",
 };
