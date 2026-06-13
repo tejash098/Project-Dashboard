@@ -20,7 +20,7 @@ const NavItem = ({ icon: Icon, label, path, isOpen }) => {
                 ${FLEX.CENTER} ${SPACING.GAP_3}
                 ${SPACING.PX_3} ${SPACING.PY_2_5} ${SPACING.MX_2} ${ROUNDED.MD}
                 ${isActive
-                    ? "bg-accent-subtle text-accent"
+                    ? "bg-accent-subtle text-accent border-l-3 border-accent"
                     : `text-text-secondary hover:bg-accent-subtle hover:text-accent ${TRANSITION.COLORS}`
                 }
             `}

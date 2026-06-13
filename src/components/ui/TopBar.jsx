@@ -1,5 +1,8 @@
 import ThemeToggle from "./ThemeToggle";
 import { HEIGHT, SPACING, TRANSITION, TYPOGRAPHY, FLEX, SIZING } from "../../config/constants";
+import { useLocation } from "react-router-dom";
+import navItems from "../../config/navItems";
+
 
 /**
  * Top navigation bar — spans the content column.
@@ -8,6 +11,8 @@ import { HEIGHT, SPACING, TRANSITION, TYPOGRAPHY, FLEX, SIZING } from "../../con
  * Right zone: action buttons (theme toggle, future icons).
  */
 const TopBar = () => {
+    const location = useLocation();
+    const currentPage = navItems.find(item => item.path === location.pathname)?.label ?? "Dashboard";
     return (
         <header className={`
             ${HEIGHT.TOPBAR} ${SIZING.FLEX_SHRINK_0}
@@ -17,7 +22,7 @@ const TopBar = () => {
         `}>
             {/* ── Left — page title ── */}
             <div className={`${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary`}>
-                Dashboard
+                {currentPage}
             </div>
 
             {/* ── Center — grows to push zones apart ── */}
