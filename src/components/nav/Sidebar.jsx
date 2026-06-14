@@ -66,12 +66,13 @@ const Sidebar = () => {
         className={`${FLEX.FLEX_1} ${SPACING.PY_4} ${SIZING.OVERFLOW_Y_AUTO}`}
         onClick={handleNavClick}
       >
-        {navItems.map(({ id, icon, label, path }) => (
+        {navItems.map(({ id, icon, label, path, end }) => (
           <NavItem
             key={id}
             icon={icon}
             label={label}
             path={path}
+            end={end}
             isOpen={isOpen}
           />
         ))}

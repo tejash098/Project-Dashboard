@@ -2,14 +2,11 @@ import { useSidebar } from "../hooks/useSidebar";
 import Sidebar from "../components/nav/Sidebar";
 import TopBar from "../components/ui/TopBar";
 import {
-  SIDEBAR,
   TRANSITION,
   HEIGHT,
   SIZING,
   FLEX,
   APPSHELL,
-  BORDER,
-  DRAWER,
   Z_INDEX,
   A11Y,
 } from "../config/constants";
@@ -51,7 +48,7 @@ const AppShell = ({ children }) => {
         className={`
         h-full bg-sidebar-bg border-r border-border
         fixed top-0 left-0 z-40
-        md:static md:z-auto md:flex-shrink-0
+        md:static md:z-auto md:shrink-0
         w-64
         transition-transform md:transition-all duration-300 ease-in-out
         motion-reduce:transition-none

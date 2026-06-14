@@ -20,10 +20,11 @@ import {
  * @param {string}            path   - Route path passed to NavLink `to` prop.
  * @param {boolean}           isOpen - Whether the sidebar is expanded.
  */
-const NavItem = ({ icon: Icon, label, path, isOpen }) => {
+const NavItem = ({ icon: Icon, label, path, isOpen, end }) => {
   return (
     <NavLink
       to={path}
+      end={end}
       title={!isOpen ? label : undefined}
       className={({ isActive }) => `
                 ${FLEX.CENTER} ${SPACING.GAP_3}

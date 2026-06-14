@@ -1,6 +1,5 @@
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import BarChartIcon from "@mui/icons-material/BarChart";
-import SettingsIcon from "@mui/icons-material/Settings";
+import FolderIcon from "@mui/icons-material/Folder";
 
 /**
  * Navigation item configuration for the sidebar.
@@ -10,9 +9,8 @@ import SettingsIcon from "@mui/icons-material/Settings";
  * @type {Array<{ id: number, label: string, path: string, icon: React.ElementType }>}
  */
 const navItems = [
-  { id: 1, label: "Dashboard", path: "/", icon: DashboardIcon },
-  { id: 2, label: "Analytics", path: "/analytics", icon: BarChartIcon },
-  { id: 3, label: "Settings", path: "/settings", icon: SettingsIcon },
+  { id: 1, label: "Dashboard", path: "/", icon: DashboardIcon, end: true },
+  { id: 2, label: "Projects", path: "/projects", icon: FolderIcon },
 ];
 
 export default navItems;

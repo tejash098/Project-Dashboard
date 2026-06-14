@@ -1,7 +1,7 @@
 import AppShell from "./layouts/AppShell";
 import Dashboard from "./pages/Dashboard";
-import Analytics from "./pages/Analytics";
-import Settings from "./pages/Settings";
+import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 import { Routes, Route } from "react-router-dom";
 
 /**
@@ -12,9 +12,9 @@ const App = () => {
     return (
         <AppShell>
             <Routes>
-                <Route path="/"          element={<Dashboard />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/settings"  element={<Settings />}  />
+                <Route path="/"             element={<Dashboard />} />
+                <Route path="/projects"     element={<Projects />} />
+                <Route path="/projects/:id" element={<ProjectDetail />} />
             </Routes>
         </AppShell>
     );

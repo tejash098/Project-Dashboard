@@ -6,7 +6,6 @@ import {
   TYPOGRAPHY,
   ROUNDED,
   FLEX,
-  SIZING,
   BORDER,
   A11Y,
 } from "../../config/constants";
