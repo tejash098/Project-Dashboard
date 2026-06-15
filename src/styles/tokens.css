@@ -22,6 +22,10 @@
   --color-accent: #c07a3a;
   --color-accent-subtle: #fdf0e0;
 
+  /* ─── Success (completed status) ─── */
+  --color-success: #3f8552;
+  --color-success-subtle: #e7f1e3;
+
   /* ─── Font ─── */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Fira Mono", ui-monospace, SF Mono, SF Mono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
@@ -42,4 +46,6 @@
   --color-text-secondary: #a07850;
   --color-accent: #d4914a;
   --color-accent-subtle: #2e1c0c;
+  --color-success: #6db97f;
+  --color-success-subtle: #1b2a14;
 }

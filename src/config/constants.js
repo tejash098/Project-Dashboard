@@ -41,6 +41,7 @@ export const ROUNDED = {
   SM: "rounded",
   MD: "rounded-lg",
   LG: "rounded-xl",
+  FULL: "rounded-full",
 };
 
 // ── Spacing ──────────────────────────────────────────────────
@@ -120,7 +121,8 @@ export const APPSHELL = {
 
 // New group for grid
 export const GRID = {
-    STATS: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
+    STATS: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+    PROJECTS: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
 };
 
 // New group for max width
