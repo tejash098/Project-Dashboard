@@ -18,7 +18,7 @@ import { ICON_SIZE, ROUNDED, TYPOGRAPHY } from "../../config/constants";
  * @param {Project} props.project - Project to render.
  */
 const ProjectCard = ({ project }) => {
-  const { id, title, description, status, techStack, liveUrl, repoUrl } =
+  const { id, title, description, status, techStack, tags, liveUrl, repoUrl } =
     project;
 
   return (
@@ -49,6 +49,19 @@ const ProjectCard = ({ project }) => {
               ${TYPOGRAPHY.TEXT_XS} text-text-secondary`}
           >
             {tech}
+          </span>
+        ))}
+      </div>
+
+      {/* ── Tags — freeform categories, muted #-prefixed pills ── */}
+      <div className="flex flex-wrap gap-2 mt-3">
+        {tags.map((tag) => (
+          <span
+            key={tag}
+            className={`${ROUNDED.FULL} bg-page-bg px-2 py-0.5
+              ${TYPOGRAPHY.TEXT_XS} text-text-secondary`}
+          >
+            #{tag}
           </span>
         ))}
       </div>
