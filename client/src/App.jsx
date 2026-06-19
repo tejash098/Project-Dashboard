@@ -14,7 +14,7 @@ const App = () => {
             <Routes>
                 <Route path="/"             element={<Dashboard />} />
                 <Route path="/projects"     element={<Projects />} />
-                <Route path="/projects/:id" element={<ProjectDetail />} />
+                <Route path="/projects/:slug" element={<ProjectDetail />} />
             </Routes>
         </AppShell>
     );

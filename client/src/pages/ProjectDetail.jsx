@@ -1,10 +1,11 @@
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import LaunchIcon from "@mui/icons-material/Launch";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import PageLayout from "../layouts/PageLayout";
 import BackLink from "../components/ui/BackLink";
 import StatusBadge from "../components/ui/StatusBadge";
-import { getProjectById } from "../lib/projectSelectors";
+import { fetchProjectBySlug } from "../services/api";
 import { formatDate } from "../lib/formatters";
 import {
   CONTAINER,
@@ -15,15 +16,61 @@ import {
 } from "../config/constants";
 
 /**
- * Project detail page — full record for a single project, looked up by the
- * `:id` route slug. Renders a not-found state when the slug doesn't match.
+ * Project detail page — full record for a single project, fetched by the
+ * `:slug` route param. Renders a not-found state when the slug doesn't match.
  */
 const ProjectDetail = () => {
-  const { id } = useParams();
-  const project = getProjectById(id);
+  const { slug } = useParams();
 
-  // ── Not found — the slug matched no project ──
-  if (!project) {
+  // ── Fetched data lifecycle ──
+  const [project, setProject] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [loadedSlug, setLoadedSlug] = useState(slug);
+
+  // Reset to the loading state when navigating to a different slug. Adjusting
+  // state during render (rather than inside the effect) is React's recommended
+  // way to reset on a param change and avoids a cascading-render warning.
+  if (slug !== loadedSlug) {
+    setLoadedSlug(slug);
+    setProject(null);
+    setError(null);
+    setLoading(true);
+  }
+
+  // Fetch whenever the slug changes. A 404 rejects the promise, landing in
+  // catch → renders the not-found state. The `ignore` flag drops a stale
+  // response if the slug changes again before the request resolves.
+  useEffect(() => {
+    let ignore = false;
+    fetchProjectBySlug(slug)
+      .then((data) => {
+        if (!ignore) setProject(data);
+      })
+      .catch((err) => {
+        if (!ignore) setError(err.message);
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [slug]);
+
+  // ── Loading — still fetching ──
+  if (loading) {
+    return (
+      <PageLayout title="Loading…">
+        <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
+          Loading project…
+        </p>
+      </PageLayout>
+    );
+  }
+
+  // ── Not found — fetch failed or the slug matched no project ──
+  if (error || !project) {
     return (
       <PageLayout title="Project Not Found">
         <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary ${SPACING.MB_6}`}>

@@ -5,7 +5,7 @@ import Card from "./Card";
 import StatusBadge from "./StatusBadge";
 import { ICON_SIZE, ROUNDED, TYPOGRAPHY } from "../../config/constants";
 
-/** @typedef {import("../../data/projects").Project} Project */
+/** @typedef {import("../../services/api").Project} Project */
 
 /**
  * Card summarizing a single project. Composes the base Card.
@@ -18,7 +18,7 @@ import { ICON_SIZE, ROUNDED, TYPOGRAPHY } from "../../config/constants";
  * @param {Project} props.project - Project to render.
  */
 const ProjectCard = ({ project }) => {
-  const { id, title, description, status, techStack, tags, liveUrl, repoUrl } =
+  const { slug, title, description, status, techStack, tags, liveUrl, repoUrl } =
     project;
 
   return (
@@ -26,7 +26,7 @@ const ProjectCard = ({ project }) => {
       {/* ── Top row — title (links to detail) + status pill ── */}
       <div className="flex items-start justify-between gap-3">
         <Link
-          to={`/projects/${id}`}
+          to={`/projects/${slug}`}
           className={`${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary
             hover:text-accent transition-colors duration-200`}
         >
@@ -42,7 +42,7 @@ const ProjectCard = ({ project }) => {
 
       {/* ── Tech stack — neutral chips, distinct from the status pill ── */}
       <div className="flex flex-wrap gap-2 mt-3">
-        {techStack.map((tech) => (
+        {techStack?.map((tech) => (
           <span
             key={tech}
             className={`${ROUNDED.MD} border border-border px-2 py-0.5
@@ -55,7 +55,7 @@ const ProjectCard = ({ project }) => {
 
       {/* ── Tags — freeform categories, muted #-prefixed pills ── */}
       <div className="flex flex-wrap gap-2 mt-3">
-        {tags.map((tag) => (
+        {tags?.map((tag) => (
           <span
             key={tag}
             className={`${ROUNDED.FULL} bg-page-bg px-2 py-0.5

@@ -1,4 +1,3 @@
-import { getStatusCounts } from "../../lib/projectSelectors";
 import { A11Y, ROUNDED, TRANSITION, TYPOGRAPHY } from "../../config/constants";
 
 /** Selectable filter values and their display labels. */
@@ -10,16 +9,16 @@ const FILTERS = [
 
 /**
  * Controlled status-filter tab bar. Owns no state: it receives the current
- * filter and reports changes upward, so any parent can drive it.
- * Each tab shows a live count from getStatusCounts().
+ * filter and the counts, and reports changes upward, so any parent can drive it.
+ * Each tab shows the count supplied by the parent.
  *
  * @param {Object}   props
  * @param {string}   props.filter   - Currently selected filter value.
  * @param {Function} props.onChange - Called with the new value on click.
+ * @param {{ total: number, active: number, completed: number }} props.counts -
+ *   Status counts derived from the fetched project list.
  */
-const FilterTabs = ({ filter, onChange }) => {
-  const counts = getStatusCounts();
-
+const FilterTabs = ({ filter, onChange, counts }) => {
   /** Count for a given filter value ("all" maps to the total). */
   const countFor = (value) => (value === "all" ? counts.total : counts[value]);
 
