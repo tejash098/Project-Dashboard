@@ -27,7 +27,7 @@ const ProjectDetail = () => {
     return (
       <PageLayout title="Project Not Found">
         <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary ${SPACING.MB_6}`}>
-          We couldn't find a project with that id.
+          Project Not Found. Go back to the Project List and Select existing one.
         </p>
         <BackLink />
       </PageLayout>
