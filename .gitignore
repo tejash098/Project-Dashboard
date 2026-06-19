@@ -19,8 +19,7 @@ client/dist
 *.local
 
 # Editor directories and files
-.vscode/*
-!.vscode/extensions.json
+.vscode
 .idea
 .DS_Store
 *.suo
@@ -39,6 +38,7 @@ client/.env
 server/.env
 
 # AI & Planning
+.claude
 CONTEXT.md
 CLAUDE.md
 GEMINI.md
