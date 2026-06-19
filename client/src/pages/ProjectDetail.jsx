@@ -63,7 +63,7 @@ const ProjectDetail = () => {
             Tech Stack
           </h2>
           <div className="flex flex-wrap gap-2">
-            {techStack.map((tech) => (
+            {techStack?.map((tech) => (
               <span
                 key={tech}
                 className={`${ROUNDED.MD} border border-border px-2 py-0.5
@@ -81,7 +81,7 @@ const ProjectDetail = () => {
             Tags
           </h2>
           <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
+            {tags?.map((tag) => (
               <span
                 key={tag}
                 className={`${ROUNDED.FULL} bg-page-bg px-2 py-0.5
