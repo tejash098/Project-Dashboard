@@ -18,10 +18,23 @@ const Dashboard = () => {
 
   // Fetch all projects once and reduce them to status counts.
   useEffect(() => {
-    fetchProjects()
-      .then((projects) => setCounts(getStatusCounts(projects)))
-      .catch((err) => setError(err.response?.data?.message || err.message))
-      .finally(() => setLoading(false));
+    // A useEffect callback can't be async itself (it must return a cleanup
+    // function, not a Promise), so the work lives in an inner async function.
+    const loadCounts = async () => {
+      console.log("[Dashboard] fetching projects for stat counts…");
+      try {
+        const projects = await fetchProjects();
+        const next = getStatusCounts(projects);
+        console.log("[Dashboard] counts:", next);
+        setCounts(next);
+      } catch (err) {
+        console.error("[Dashboard] load failed:", err.message);
+        setError(err.response?.data?.message || err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCounts();
   }, []);
 
   const STATS = [

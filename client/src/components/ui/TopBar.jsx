@@ -1,4 +1,5 @@
 import ThemeToggle from "./ThemeToggle";
+import ProfileMenu from "./ProfileMenu";
 import {
   HEIGHT,
   SPACING,
@@ -64,6 +65,7 @@ const TopBar = () => {
       {/* ── Right — action buttons ── */}
       <div className={`${FLEX.CENTER} ${SPACING.GAP_2}`}>
         <ThemeToggle />
+        <ProfileMenu />
       </div>
     </header>
   );

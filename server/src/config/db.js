@@ -1,17 +1,15 @@
 import mongoose from "mongoose";
 import dns from "node:dns";
-import "dotenv/config";
+import config from "./env.js";
 
 // Resolve mongodb+srv SRV/TXT records via public DNS instead of the local
 // network resolver, which refused the query (querySrv ECONNREFUSED).
-dns.setServers(["1.1.1.1", "8.8.8.8"]);
-
-const mongodb_uri = process.env.MONGODB_URI;
+dns.setServers(config.dnsServers);
 
 // Stable API: pin the server API version so server upgrades can't silently
 // change behavior. The ping/CRUD this app uses are all within Stable API v1.
 const clientOptions = {
-  serverApi: { version: "1", strict: true, deprecationErrors: true },
+  serverApi: config.mongoServerApi,
 };
 
 /**
@@ -22,10 +20,11 @@ const clientOptions = {
  */
 const connectDB = async () => {
   try {
-    await mongoose.connect(mongodb_uri, clientOptions);
-    console.log("MongoDB connection established successfully");
+    console.log("[db] connecting to MongoDB…");
+    await mongoose.connect(config.mongodbUri, clientOptions);
+    console.log("[db] connection established successfully");
   } catch (error) {
-    console.error("MongoDB connection error:", error);
+    console.error("[db] connection error:", error);
     process.exit(1); // Exit the process with an error code
   }
 };

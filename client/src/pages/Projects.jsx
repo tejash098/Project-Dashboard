@@ -2,16 +2,48 @@ import { useEffect, useState } from "react";
 import PageLayout from "../layouts/PageLayout";
 import FilterTabs from "../components/ui/FilterTabs";
 import ProjectCard from "../components/ui/ProjectCard";
+import GatewayModal from "../components/ui/GatewayModal";
+import LoginModal from "../components/ui/LoginModal";
 import { fetchProjects } from "../services/api";
 import { getStatusCounts } from "../lib/projectStats";
+import { useAuth } from "../hooks/useAuth";
 import { GRID, SPACING, TYPOGRAPHY } from "../config/constants";
 
 /**
  * Projects page — filterable, sorted grid of project cards fetched from the API.
- * Owns the filter state and drives the controlled FilterTabs.
+ * Owns the filter state and drives the controlled FilterTabs. On first visit
+ * (no view mode chosen yet) it prompts a visitor/admin gateway.
  */
 const Projects = () => {
   const [filter, setFilter] = useState("all");
+
+  // ── View-mode gateway ──
+  const { viewMode, setViewMode } = useAuth();
+  // Open the gateway whenever the mode is still undecided for this session.
+  const [gatewayOpen, setGatewayOpen] = useState(viewMode === null);
+  const [loginOpen, setLoginOpen] = useState(false);
+
+  /** Visitor path — browse read-only; records the choice so it won't re-prompt. */
+  const handleVisitor = () => {
+    console.log("[Projects] gateway → view as visitor");
+    setViewMode("visitor");
+    setGatewayOpen(false);
+  };
+
+  /** Admin path — fall back to visitor, then open login (success flips to admin). */
+  const handleAdmin = () => {
+    console.log("[Projects] gateway → view as admin (opening login)");
+    setViewMode("visitor");
+    setGatewayOpen(false);
+    setLoginOpen(true);
+  };
+
+  /** Dismissed without choosing — treat as visitor so it won't nag again. */
+  const handleGatewayClose = () => {
+    console.log("[Projects] gateway dismissed → defaulting to visitor");
+    setViewMode("visitor");
+    setGatewayOpen(false);
+  };
 
   // ── Fetched data lifecycle ──
   const [projects, setProjects] = useState([]);
@@ -20,10 +52,21 @@ const Projects = () => {
 
   // Load the project list once on mount.
   useEffect(() => {
-    fetchProjects()
-      .then(setProjects)
-      .catch((err) => setError(err.response?.data?.message || err.message))
-      .finally(() => setLoading(false));
+    // Inner async function — the effect callback itself can't be async.
+    const loadProjects = async () => {
+      console.log("[Projects] fetching project list…");
+      try {
+        const list = await fetchProjects();
+        console.log(`[Projects] loaded ${list.length} projects`);
+        setProjects(list);
+      } catch (err) {
+        console.error("[Projects] load failed:", err.message);
+        setError(err.response?.data?.message || err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProjects();
   }, []);
 
   // Counts come from the full fetched list, not the filtered view, so the tabs
@@ -38,7 +81,17 @@ const Projects = () => {
     .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
   return (
-    <PageLayout title="Projects" subtitle="Browse and manage your projects">
+    <>
+      {/* ── View-mode gateway + login (overlays; rendered via portals) ── */}
+      <GatewayModal
+        open={gatewayOpen}
+        onVisitor={handleVisitor}
+        onAdmin={handleAdmin}
+        onClose={handleGatewayClose}
+      />
+      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+
+      <PageLayout title="Projects" subtitle="Browse and manage your projects">
       {/* ── Loading / error first, then the filtered grid ── */}
       {loading ? (
         <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary mt-6`}>
@@ -67,7 +120,8 @@ const Projects = () => {
           )}
         </>
       )}
-    </PageLayout>
+      </PageLayout>
+    </>
   );
 };
 
