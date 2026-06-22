@@ -1,6 +1,7 @@
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import FolderIcon from "@mui/icons-material/Folder";
 import ArticleIcon from "@mui/icons-material/Article";
+import ContactMailIcon from "@mui/icons-material/ContactMail";
 
 /**
  * Navigation item configuration for the sidebar.
@@ -13,6 +14,7 @@ const navItems = [
   { id: 1, label: "Dashboard", path: "/", icon: DashboardIcon, end: true },
   { id: 2, label: "Projects", path: "/projects", icon: FolderIcon },
   { id: 3, label: "Docs", path: "/docs", icon: ArticleIcon },
+  { id: 4, label: "Contact", path: "/contact", icon: ContactMailIcon },
 ];
 
 export default navItems;
