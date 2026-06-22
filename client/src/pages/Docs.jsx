@@ -1,6 +1,8 @@
+import { useMemo } from "react";
 import PageLayout from "../layouts/PageLayout";
 import Card from "../components/ui/Card";
 import CodeBlock from "../components/ui/CodeBlock";
+import CopyPageMenu from "../components/ui/CopyPageMenu";
 import EndpointCard from "../components/ui/EndpointCard";
 import {
   API_OVERVIEW,
@@ -9,7 +11,11 @@ import {
   PROJECT_MODEL,
   STATUS_CODES,
 } from "../data/apiDocs";
+import { buildDocsMarkdown } from "../utils/docsMarkdown";
 import { ROUNDED, TYPOGRAPHY } from "../config/constants";
+
+/** Public URL where the backend serves this page as raw Markdown. */
+const DOCS_MD_URL = `${import.meta.env.SERVER_BASE_URL}/docs.md`;
 
 /** In-page nav targets — label + the section `id` each anchors to. */
 const SECTIONS = [
@@ -55,10 +61,14 @@ const Section = ({ id, title, subtitle, children }) => (
  * the global status-code conventions.
  */
 const Docs = () => {
+  // Render the page to Markdown once — used by "Copy page" / "View as Markdown".
+  const markdown = useMemo(() => buildDocsMarkdown(), []);
+
   return (
     <PageLayout
       title="API Documentation"
       subtitle="Reference for the Project Dashboard REST API"
+      actions={<CopyPageMenu markdown={markdown} markdownUrl={DOCS_MD_URL} />}
     >
       {/* ── In-page nav — quick jumps to each section ── */}
       <nav className="flex flex-wrap gap-2 mb-8">
@@ -102,8 +112,9 @@ const Docs = () => {
       {/* ── Authentication — login flow + bearer header ── */}
       <Section id="authentication" title="Authentication">
         <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
-          Obtain a token from <code className="font-mono">POST /api/auth/login</code>,
-          then send it on protected requests using the{" "}
+          Obtain a token from{" "}
+          <code className="font-mono">POST /api/auth/login</code>, then send it
+          on protected requests using the{" "}
           <code className="font-mono">Authorization</code> header. Tokens are
           valid for {AUTH_INFO.tokenTtl}; once expired, log in again.
         </p>
@@ -141,7 +152,9 @@ const Docs = () => {
           return (
             <div key={group} className="mt-6 first:mt-0">
               {/* Resource subheading (Auth, Projects). */}
-              <h3 className={`${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary mb-3`}>
+              <h3
+                className={`${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary mb-3`}
+              >
                 {group}
               </h3>
               <div className="flex flex-col gap-4">
@@ -165,33 +178,50 @@ const Docs = () => {
             <table className={`w-full text-left ${TYPOGRAPHY.TEXT_SM}`}>
               <thead>
                 <tr className="border-b border-border">
-                  <th className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}>
+                  <th
+                    className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}
+                  >
                     Field
                   </th>
-                  <th className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}>
+                  <th
+                    className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}
+                  >
                     Type
                   </th>
-                  <th className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}>
+                  <th
+                    className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}
+                  >
                     Required
                   </th>
-                  <th className={`py-2 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}>
+                  <th
+                    className={`py-2 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}
+                  >
                     Notes
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {PROJECT_MODEL.map(({ field, type, required, notes }) => (
-                  <tr key={field} className="border-b border-border last:border-0">
+                  <tr
+                    key={field}
+                    className="border-b border-border last:border-0"
+                  >
                     <td className="py-2 pr-4 align-top">
-                      <code className="font-mono text-text-primary">{field}</code>
+                      <code className="font-mono text-text-primary">
+                        {field}
+                      </code>
                     </td>
                     <td className="py-2 pr-4 align-top">
-                      <code className="font-mono text-text-secondary">{type}</code>
+                      <code className="font-mono text-text-secondary">
+                        {type}
+                      </code>
                     </td>
                     <td className="py-2 pr-4 align-top text-text-secondary">
                       {required ? "Yes" : "No"}
                     </td>
-                    <td className="py-2 align-top text-text-secondary">{notes}</td>
+                    <td className="py-2 align-top text-text-secondary">
+                      {notes}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -211,21 +241,32 @@ const Docs = () => {
             <table className={`w-full text-left ${TYPOGRAPHY.TEXT_SM}`}>
               <thead>
                 <tr className="border-b border-border">
-                  <th className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}>
+                  <th
+                    className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}
+                  >
                     Code
                   </th>
-                  <th className={`py-2 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}>
+                  <th
+                    className={`py-2 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}
+                  >
                     Meaning
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {STATUS_CODES.map(({ code, meaning }) => (
-                  <tr key={code} className="border-b border-border last:border-0">
+                  <tr
+                    key={code}
+                    className="border-b border-border last:border-0"
+                  >
                     <td className="py-2 pr-4 align-top">
-                      <code className="font-mono text-text-primary">{code}</code>
+                      <code className="font-mono text-text-primary">
+                        {code}
+                      </code>
                     </td>
-                    <td className="py-2 align-top text-text-secondary">{meaning}</td>
+                    <td className="py-2 align-top text-text-secondary">
+                      {meaning}
+                    </td>
                   </tr>
                 ))}
               </tbody>
