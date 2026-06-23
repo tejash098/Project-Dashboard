@@ -1,11 +1,14 @@
+import MenuIcon from "@mui/icons-material/Menu";
 import { useSidebar } from "../hooks/useSidebar";
 import Sidebar from "../components/nav/Sidebar";
-import TopBar from "../components/ui/TopBar";
 import {
   TRANSITION,
   HEIGHT,
   SIZING,
+  SPACING,
   FLEX,
+  ROUNDED,
+  BORDER,
   APPSHELL,
   Z_INDEX,
   A11Y,
@@ -62,12 +65,32 @@ const AppShell = ({ children }) => {
         <Sidebar />
       </div>
 
-      {/* ── Content column ── */}
+      {/* ── Content column — main fills the remaining height ── */}
       <div className={`${FLEX.FLEX_1} ${FLEX.MIN_W_0} ${FLEX.ROW} ${FLEX.COL}`}>
-        {/* ── TopBar ── */}
-        <TopBar />
+        {/* ── Mobile-only top bar ──
+           In-flow (not fixed) so it occupies its own space and never overlaps
+           page headings; hidden on desktop where controls live in the sidebar. */}
+        <header
+          className={`
+            md:hidden ${FLEX.CENTER} ${FLEX.SHRINK_0}
+            ${HEIGHT.TOPBAR} ${SPACING.PX_3}
+            bg-sidebar-bg ${BORDER.BOTTOM} ${TRANSITION.COLORS_SLOW}
+          `}
+        >
+          <button
+            onClick={toggle}
+            aria-label="Open menu"
+            className={`
+              ${FLEX.CENTER_JUSTIFY} p-2 ${ROUNDED.MD}
+              text-text-secondary
+              hover:bg-accent-subtle hover:text-accent
+              ${TRANSITION.COLORS} ${A11Y.FOCUS_RING}
+            `}
+          >
+            <MenuIcon sx={{ fontSize: 22 }} />
+          </button>
+        </header>
 
-        {/* ── Scrollable main area ── */}
         <main
           className={`${FLEX.FLEX_1} ${SIZING.OVERFLOW_Y_AUTO} ${APPSHELL.MAIN_PADDING}`}
         >

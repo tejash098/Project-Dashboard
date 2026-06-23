@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import PageLayout from "../layouts/PageLayout";
 import BackLink from "../components/ui/BackLink";
 import Card from "../components/ui/Card";
 import CopyButton from "../components/ui/CopyButton";
 import ImageLightbox from "../components/ui/ImageLightbox";
-import { getFeedbackById, updateFeedback } from "../services/api/feedback";
+import Modal from "../components/ui/Modal";
+import {
+  getFeedbackById,
+  updateFeedback,
+  deleteFeedback,
+} from "../services/api/feedback";
 import { useToast } from "../hooks/useToast";
 import { formatDate } from "../lib/formatters";
 import { FEEDBACK_STATUSES } from "../config/feedbackStatus";
@@ -15,6 +21,7 @@ import {
   SPACING,
   TYPOGRAPHY,
   A11Y,
+  ICON_SIZE,
 } from "../config/constants";
 
 /** Shared <select> styling — written verbatim so Tailwind's scanner detects it. */
@@ -49,6 +56,7 @@ const Field = ({ label, children, copyValue }) => (
  */
 const ReportDetail = () => {
   const { fId } = useParams();
+  const navigate = useNavigate();
   const { addToast } = useToast();
 
   const [item, setItem] = useState(null);
@@ -56,6 +64,8 @@ const ReportDetail = () => {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false); // confirmation modal
+  const [deleting, setDeleting] = useState(false); // in-flight delete
 
   // Fetch the feedback by f_id; ignore stale responses if fId changes mid-flight.
   useEffect(() => {
@@ -102,6 +112,26 @@ const ReportDetail = () => {
     }
   };
 
+  /**
+   * Permanently delete this feedback (and its uploaded image) via the feedback
+   * DELETE API, then return to the report list. On failure the admin stays on
+   * the detail page with the delete controls re-enabled.
+   */
+  const handleDelete = async () => {
+    setDeleting(true);
+    console.log(`[ReportDetail] deleting feedback ${fId}`);
+    try {
+      await deleteFeedback(fId);
+      addToast({ type: "success", message: "Feedback deleted." });
+      navigate("/report");
+    } catch (err) {
+      console.warn(`[ReportDetail] delete failed: ${err.message}`);
+      addToast({ type: "error", message: "Couldn’t delete feedback." });
+      setDeleting(false);
+      setDeleteOpen(false);
+    }
+  };
+
   return (
     <>
       <div className={`${CONTAINER.MAX_W} mb-4`}>
@@ -129,20 +159,39 @@ const ReportDetail = () => {
           title={item.title}
           subtitle={`Submitted ${formatDate(item.createdAt)}`}
           actions={
-            // Status control — persists through the feedback PUT API.
-            <select
-              value={item.status}
-              onChange={(e) => handleStatusChange(e.target.value)}
-              disabled={saving}
-              aria-label="Change status"
-              className={`${SELECT_CLASS} disabled:opacity-60`}
-            >
-              {FEEDBACK_STATUSES.map(({ value, label }) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+            // Status control + destructive delete action, side by side.
+            <div className="flex items-center gap-2">
+              {/* Status control — persists through the feedback PUT API.
+                  Disabled while deleting to avoid conflicting requests. */}
+              <select
+                value={item.status}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                disabled={saving || deleting}
+                aria-label="Change status"
+                className={`${SELECT_CLASS} disabled:opacity-60`}
+              >
+                {FEEDBACK_STATUSES.map(({ value, label }) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+
+              {/* Delete — opens a confirmation modal. Disabled while a status
+                  save or a delete is already in progress. */}
+              <button
+                type="button"
+                onClick={() => setDeleteOpen(true)}
+                disabled={saving || deleting}
+                aria-label="Delete feedback"
+                className={`flex items-center gap-1 ${ROUNDED.MD} bg-danger-subtle
+                  px-3 py-1.5 ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM}
+                  text-danger hover:opacity-90 disabled:opacity-60 ${A11Y.FOCUS_RING}`}
+              >
+                <DeleteOutlineIcon sx={{ fontSize: ICON_SIZE.SM }} />
+                Delete
+              </button>
+            </div>
           }
         >
           <Card>
@@ -193,6 +242,43 @@ const ReportDetail = () => {
             alt={item.title}
             onClose={() => setLightboxOpen(false)}
           />
+
+          {/* Destructive confirmation — both buttons disable while a delete is
+              in flight to prevent duplicate requests. */}
+          <Modal
+            open={deleteOpen}
+            onClose={() => setDeleteOpen(false)}
+            title="Delete feedback?"
+          >
+            <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary mb-4`}>
+              This will permanently delete this feedback and its uploaded image,
+              if any.
+            </p>
+            <div className="flex justify-end gap-2">
+              {/* Cancel — dismiss without deleting. */}
+              <button
+                type="button"
+                onClick={() => setDeleteOpen(false)}
+                disabled={deleting}
+                className={`${ROUNDED.MD} border border-border bg-page-bg px-3 py-1.5
+                  ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary
+                  hover:border-accent disabled:opacity-60 ${A11Y.FOCUS_RING}`}
+              >
+                Cancel
+              </button>
+              {/* Confirm — calls the DELETE API; uses the danger theme tokens. */}
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className={`${ROUNDED.MD} bg-danger px-3 py-1.5
+                  ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM} text-white
+                  hover:opacity-90 disabled:opacity-60 ${A11Y.FOCUS_RING}`}
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </Modal>
         </PageLayout>
       )}
     </>

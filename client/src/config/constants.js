@@ -67,7 +67,7 @@ export const SPACING = {
 // ── Layout heights ───────────────────────────────────────────
 export const HEIGHT = {
   SCREEN: "h-screen",
-  TOPBAR: "h-16",
+  TOPBAR: "h-16", // mobile-only top bar height (AppShell)
   SIDEBAR_TOGGLE: "h-16",
   ICON_BUTTON: "h-8",
   FULL: "h-full",

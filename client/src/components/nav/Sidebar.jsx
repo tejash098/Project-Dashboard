@@ -2,13 +2,14 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSidebar } from "../../hooks/useSidebar";
 import { useAuth } from "../../hooks/useAuth";
 import NavItem from "./NavItem";
+import ThemeToggle from "../ui/ThemeToggle";
+import ProfileMenu from "../ui/ProfileMenu";
 import navItems from "../../config/navItems";
 import {
   HEIGHT,
   SPACING,
   ROUNDED,
   TRANSITION,
-  TYPOGRAPHY,
   FLEX,
   SIZING,
   WIDTH,
@@ -83,15 +84,21 @@ const Sidebar = () => {
         ))}
       </nav>
 
-      {/* ── Bottom section — reserved for user avatar / logout ── */}
-      <div className={`${FLEX.SHRINK_0} ${BORDER.TOP} ${SPACING.PY_3}`}>
-        {isOpen && (
-          <p
-            className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary ${SPACING.PX_5}`}
-          >
-            Project Dashboard
-          </p>
-        )}
+      {/* ── Bottom section — theme toggle + account / sign-in control ──
+         Expanded: a single row. Collapsed (w-16): icons stacked and centered. */}
+      <div
+        className={`${FLEX.SHRINK_0} ${BORDER.TOP} ${SPACING.PY_3} ${SPACING.PX_3}`}
+      >
+        <div
+          className={
+            isOpen
+              ? `${FLEX.CENTER} ${FLEX.JUSTIFY_BETWEEN} ${SPACING.GAP_2}`
+              : `${FLEX.ROW} ${FLEX.COL} ${FLEX.CENTER_JUSTIFY} ${SPACING.GAP_2}`
+          }
+        >
+          <ThemeToggle compact={!isOpen} />
+          <ProfileMenu compact={!isOpen} placement="sidebar" />
+        </div>
       </div>
     </aside>
   );

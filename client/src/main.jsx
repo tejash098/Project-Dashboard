@@ -10,9 +10,9 @@ import { BrowserRouter } from "react-router-dom";
 
 /**
  * Application entry point.
- * AuthProvider sits above SidebarProvider so the TopBar (profile/sign-in) can
- * read auth state, and ToastProvider sits inside so any component — including
- * inline editors — can raise toasts.
+ * AuthProvider sits above SidebarProvider so the sidebar account control
+ * (profile/sign-in) can read auth state, and ToastProvider sits inside so any
+ * component — including inline editors — can raise toasts.
  */
 createRoot(document.getElementById('root')).render(
   <StrictMode>

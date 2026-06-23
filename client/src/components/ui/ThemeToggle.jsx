@@ -6,14 +6,22 @@ import DarkModeIcon from "@mui/icons-material/DarkMode";
  * Theme toggle button — switches between light and dark mode.
  * Shows moon in light mode, sun in dark mode.
  * Reads and updates theme via useTheme hook.
+ *
+ * @param {Object} props
+ * @param {boolean} [props.compact] - Reserved for tighter layouts (e.g. the
+ *   collapsed sidebar); the visual stays icon-only either way.
  */
-const ThemeToggle = () => {
+// eslint-disable-next-line no-unused-vars -- `compact` is part of the public API
+const ThemeToggle = ({ compact = false }) => {
     const { theme, toggle } = useTheme();
+    // One label drives both the tooltip and the accessible name.
+    const label = theme === "light" ? "Switch to dark mode" : "Switch to light mode";
 
     return (
         <button
             onClick={toggle}
-            title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+            title={label}
+            aria-label={label}
             className="
                 p-2 rounded-lg
                 text-text-secondary

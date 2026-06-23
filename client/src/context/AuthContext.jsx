@@ -58,7 +58,7 @@ const AuthProvider = ({ children }) => {
 
   /**
    * Clear all auth state + persisted session. Falls back to "visitor" so the
-   * gateway doesn't immediately re-prompt; the TopBar "Sign in" button remains
+   * gateway doesn't immediately re-prompt; the sidebar "Sign in" button remains
    * the way back to admin.
    */
   const logout = useCallback(() => {
