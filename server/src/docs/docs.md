@@ -383,7 +383,7 @@ Delete a project by slug. Requires admin auth. Returns a confirmation message ra
 
 #### POST /api/feedback
 
-Submit a contact-form feedback. Public — no auth required. Sent as multipart/form-data so an optional `image` file can ride along; the server uploads it to Cloudinary and stores the resulting URL. A unique 16-digit `f_id` and `status: "active"` are assigned automatically.
+Submit a contact-form feedback. Public — no auth required. Sent as multipart/form-data so an optional `image` file can ride along; the server uploads it to Cloudinary and stores the resulting URL. Images must be 2 MB or smaller. A unique 16-digit `f_id` and `status: "active"` are assigned automatically.
 
 **Auth required:** No
 
@@ -425,7 +425,7 @@ Submit a contact-form feedback. Public — no auth required. Sent as multipart/f
 | Code | Meaning |
 | --- | --- |
 | 201 | Created |
-| 400 | Validation failed (missing/invalid fields) |
+| 400 | Validation failed or image is larger than 2 MB |
 
 #### GET /api/feedback
 
@@ -520,7 +520,7 @@ Fetch a single feedback by its `f_id`. Requires admin auth. Note the path identi
 
 #### PUT /api/feedback/:id
 
-Update a feedback by its `f_id`, returning the updated document. Requires admin auth. Editable fields: title, name, email, phone, message, status. Send as multipart/form-data with an `image` file to replace the uploaded image (the previous Cloudinary asset is removed).
+Update a feedback by its `f_id`, returning the updated document. Requires admin auth. Editable fields: title, name, email, phone, message, status. Send as multipart/form-data with an `image` file to replace the uploaded image (the previous Cloudinary asset is removed). Replacement images must be 2 MB or smaller.
 
 **Auth required:** Yes
 
@@ -561,7 +561,7 @@ Update a feedback by its `f_id`, returning the updated document. Requires admin 
 | Code | Meaning |
 | --- | --- |
 | 200 | Updated |
-| 400 | Validation failed |
+| 400 | Validation failed or image is larger than 2 MB |
 | 401 | Missing, invalid, or expired token |
 | 404 | No feedback with that f_id |
 

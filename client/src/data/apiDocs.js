@@ -350,8 +350,9 @@ export const ENDPOINTS = [
     description:
       "Submit a contact-form feedback. Public — no auth required. Sent as " +
       "multipart/form-data so an optional `image` file can ride along; the " +
-      "server uploads it to Cloudinary and stores the resulting URL. A unique " +
-      "16-digit `f_id` and `status: \"active\"` are assigned automatically.",
+      "server uploads it to Cloudinary and stores the resulting URL. Images " +
+      "must be 2 MB or smaller. A unique 16-digit `f_id` and `status: " +
+      "\"active\"` are assigned automatically.",
     auth: false,
     group: "Feedback",
     requestBody: {
@@ -379,7 +380,10 @@ export const ENDPOINTS = [
     },
     statusCodes: [
       { code: 201, meaning: "Created" },
-      { code: 400, meaning: "Validation failed (missing/invalid fields)" },
+      {
+        code: 400,
+        meaning: "Validation failed or image is larger than 2 MB",
+      },
     ],
   },
   {
@@ -491,7 +495,8 @@ export const ENDPOINTS = [
       "Update a feedback by its `f_id`, returning the updated document. " +
       "Requires admin auth. Editable fields: title, name, email, phone, " +
       "message, status. Send as multipart/form-data with an `image` file to " +
-      "replace the uploaded image (the previous Cloudinary asset is removed).",
+      "replace the uploaded image (the previous Cloudinary asset is removed). " +
+      "Replacement images must be 2 MB or smaller.",
     auth: true,
     group: "Feedback",
     pathParams: [
@@ -519,7 +524,7 @@ export const ENDPOINTS = [
     },
     statusCodes: [
       { code: 200, meaning: "Updated" },
-      { code: 400, meaning: "Validation failed" },
+      { code: 400, meaning: "Validation failed or image is larger than 2 MB" },
       { code: 401, meaning: "Missing, invalid, or expired token" },
       { code: 404, meaning: "No feedback with that f_id" },
     ],

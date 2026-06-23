@@ -62,6 +62,10 @@ const INPUT_CLASS = `${WIDTH.FULL} ${ROUNDED.MD} border border-border bg-page-bg
   px-3 py-2 ${TYPOGRAPHY.TEXT_SM} text-text-primary
   placeholder:text-text-secondary ${A11Y.FOCUS_RING}`;
 
+/** Maximum image upload size accepted by the contact form. */
+const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024;
+const MAX_IMAGE_SIZE_LABEL = "2 MB";
+
 /** Initial (empty) state for the contact form fields. */
 const EMPTY_FORM = { title: "", name: "", email: "", phone: "", message: "" };
 
@@ -95,7 +99,19 @@ const Contact = () => {
    * @param {React.ChangeEvent<HTMLInputElement>} e - File input change event.
    */
   const handleFileChange = (e) => {
-    setImage(e.target.files?.[0] ?? null);
+    const file = e.target.files?.[0] ?? null;
+
+    if (file && file.size > MAX_IMAGE_SIZE_BYTES) {
+      setImage(null);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+      addToast({
+        type: "error",
+        message: `Image must be ${MAX_IMAGE_SIZE_LABEL} or smaller.`,
+      });
+      return;
+    }
+
+    setImage(file);
   };
 
   /**
@@ -315,6 +331,9 @@ const Contact = () => {
                   file:mr-3 file:rounded file:border-0 file:bg-accent
                   file:px-3 file:py-1 file:text-white file:cursor-pointer`}
               />
+              <span className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary`}>
+                Max size: {MAX_IMAGE_SIZE_LABEL}
+              </span>
             </label>
 
             {/* Submit — disabled while a request is in flight. */}
