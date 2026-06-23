@@ -1,5 +1,6 @@
 import Admin from "../models/Admin.js";
 import config from "./env.js";
+import { generate16DigitId } from "../utils/generateId.js";
 
 /**
  * Bootstrap the first admin from environment variables. Runs once on server
@@ -22,10 +23,18 @@ const seedAdmin = async () => {
     return;
   }
 
-  // "if no admin exists, create one" — leave any existing admins untouched.
+  // "if no admin exists, create one" — leave existing admins' credentials alone,
+  // but backfill a user_id for any that predate the field (it's only applied as
+  // a default to newly created docs, not to ones already in the DB).
   const existing = await Admin.countDocuments();
   if (existing > 0) {
-    console.log(`[seed] admin already exists (${existing}); nothing to do`);
+    const missing = await Admin.find({ user_id: null });
+    for (const admin of missing) {
+      admin.user_id = generate16DigitId();
+      await admin.save(); // password isn't modified, so the pre-save hook skips re-hashing
+      console.log(`[seed] backfilled user_id for "${admin.username}"`);
+    }
+    console.log(`[seed] admin already exists (${existing}); created none`);
     return;
   }
 

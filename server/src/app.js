@@ -5,6 +5,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import projectRoutes from "./routes/projectRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import feedbackRoutes from "./routes/feedbackRoutes.js";
 
 const app = express();
 
@@ -47,5 +48,8 @@ app.use("/api/auth", authRoutes);
 
 // Project resource routes
 app.use("/api/projects", projectRoutes);
+
+// Feedback (contact-form) resource routes
+app.use("/api/feedback", feedbackRoutes);
 
 export default app;

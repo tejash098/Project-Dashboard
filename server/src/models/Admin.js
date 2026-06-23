@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import config from "../config/env.js";
+import { generate16DigitId } from "../utils/generateId.js";
 
 /**
  * Mongoose schema for an admin user. `username` is the login identifier; the
@@ -9,6 +10,12 @@ import config from "../config/env.js";
  */
 const adminSchema = new mongoose.Schema(
   {
+    // 16-digit unique identifier, generated automatically on creation.
+    user_id: {
+      type: String,
+      unique: true,
+      default: generate16DigitId,
+    },
     username: {
       type: String,
       required: true,

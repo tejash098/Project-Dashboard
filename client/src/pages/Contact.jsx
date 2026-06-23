@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import emailjs from "@emailjs/browser";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
@@ -7,6 +7,7 @@ import GitHubIcon from "@mui/icons-material/GitHub";
 import PageLayout from "../layouts/PageLayout";
 import Card from "../components/ui/Card";
 import { useToast } from "../hooks/useToast";
+import { postFeedback } from "../services/api/feedback";
 import {
   ICON_SIZE,
   ROUNDED,
@@ -74,7 +75,11 @@ const Contact = () => {
   const { addToast } = useToast();
 
   const [form, setForm] = useState(EMPTY_FORM);
+  const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
+  // Ref to the native file input so it can be cleared on reset (file inputs are
+  // uncontrolled — their value can't be driven from React state).
+  const imageInputRef = useRef(null);
 
   /**
    * Update a single form field on input change.
@@ -86,9 +91,20 @@ const Contact = () => {
   };
 
   /**
-   * Send the form contents through EmailJS. On success resets the form and
-   * shows a success toast; on failure surfaces an error toast and keeps the
-   * entered values so the user can retry.
+   * Track the selected image file (or clear it when the picker is dismissed).
+   * @param {React.ChangeEvent<HTMLInputElement>} e - File input change event.
+   */
+  const handleFileChange = (e) => {
+    setImage(e.target.files?.[0] ?? null);
+  };
+
+  /**
+   * Persist the submission, then notify by email. First posts the fields plus
+   * any selected image to the feedback API — the server uploads the image to
+   * Cloudinary and stores the record, returning its `imageUrl`. That URL is then
+   * forwarded to EmailJS alongside the message. On success resets the form (and
+   * file input) and shows a success toast; on failure surfaces an error toast
+   * and keeps the entered values so the user can retry.
    * @param {React.FormEvent} e - The form submit event.
    */
   const handleSubmit = async (e) => {
@@ -103,6 +119,17 @@ const Contact = () => {
 
     setLoading(true);
     try {
+      // Send as multipart so the optional image rides along as a real file.
+      const formData = new FormData();
+      formData.append("name", form.name);
+      formData.append("email", form.email);
+      formData.append("phone", form.phone);
+      formData.append("message", form.message);
+      if (image) formData.append("image", image);
+
+      // Persist + upload first so EmailJS can carry the resulting Cloudinary URL.
+      const saved = await postFeedback(formData);
+
       // Template variable names must match those defined in the EmailJS template.
       await emailjs.send(
         EMAILJS_SERVICE_ID,
@@ -112,12 +139,16 @@ const Contact = () => {
           from_email: form.email,
           from_phone: form.phone,
           message: form.message,
+          image_url: saved?.imageUrl ?? "",
         },
         { publicKey: EMAILJS_PUBLIC_KEY },
       );
 
       addToast({ type: "success", message: "Message sent — thank you!" });
-      setForm(EMPTY_FORM); // Clear so the next message starts fresh.
+      // Clear so the next message starts fresh — including the file input.
+      setForm(EMPTY_FORM);
+      setImage(null);
+      if (imageInputRef.current) imageInputRef.current.value = "";
     } catch (err) {
       const message = err?.text || err?.message || "Failed to send message.";
       console.warn(`[Contact] send failed: ${message}`);
@@ -248,6 +279,23 @@ const Contact = () => {
                 rows={5}
                 className={`${INPUT_CLASS} resize-y`}
                 placeholder="How can I help?"
+              />
+            </label>
+
+            {/* Image — optional; uploaded to Cloudinary by the server on submit. */}
+            <label className="flex flex-col gap-1">
+              <span className={`${TYPOGRAPHY.TEXT_XS} ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary`}>
+                Image (optional)
+              </span>
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                ref={imageInputRef}
+                onChange={handleFileChange}
+                className={`${INPUT_CLASS} ${TYPOGRAPHY.TEXT_SM} text-text-secondary
+                  file:mr-3 file:rounded file:border-0 file:bg-accent
+                  file:px-3 file:py-1 file:text-white file:cursor-pointer`}
               />
             </label>
 

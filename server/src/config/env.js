@@ -44,6 +44,11 @@ const config = Object.freeze({
 
   // ── Projects ──
   defaultProjectLimit: 100, // default cap for GET /api/projects
+
+  // ── Cloudinary (feedback image uploads) ──
+  cloudinaryCloudName: required("CLOUDINARY_CLOUD_NAME"),
+  cloudinaryApiKey: required("CLOUDINARY_API_KEY"),
+  cloudinaryApiSecret: required("CLOUDINARY_API_SECRET"),
 });
 
 export default config;
