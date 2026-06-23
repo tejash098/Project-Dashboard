@@ -3,6 +3,7 @@ import {
   AUTH_INFO,
   ENDPOINTS,
   PROJECT_MODEL,
+  FEEDBACK_MODEL,
   STATUS_CODES,
 } from "../data/apiDocs.js";
 
@@ -82,7 +83,7 @@ export const buildDocsMarkdown = (baseUrl = API_OVERVIEW.baseUrl) => {
   blocks.push("## Endpoints");
   blocks.push("Reads are public; writes require an admin bearer token.");
 
-  for (const group of ["Auth", "Projects"]) {
+  for (const group of ["Auth", "Projects", "Feedback"]) {
     blocks.push(`### ${group}`);
 
     for (const endpoint of ENDPOINTS.filter((e) => e.group === group)) {
@@ -129,11 +130,24 @@ export const buildDocsMarkdown = (baseUrl = API_OVERVIEW.baseUrl) => {
 
   // ── Data Model ────────────────────────────────────────────────────────
   blocks.push("## Data Model");
-  blocks.push("Fields of the Project resource.");
+  blocks.push("Fields of the Project and Feedback resources.");
+  blocks.push("### Project");
   blocks.push(
     table(
       ["Field", "Type", "Required", "Notes"],
       PROJECT_MODEL.map((f) => [
+        f.field,
+        f.type,
+        f.required ? "Yes" : "No",
+        f.notes,
+      ]),
+    ),
+  );
+  blocks.push("### Feedback");
+  blocks.push(
+    table(
+      ["Field", "Type", "Required", "Notes"],
+      FEEDBACK_MODEL.map((f) => [
         f.field,
         f.type,
         f.required ? "Yes" : "No",

@@ -3,6 +3,9 @@ import api from "./client";
 /**
  * @typedef {Object} Feedback
  * @property {string} _id        - MongoDB document id.
+ * @property {string} f_id       - 16-digit business id.
+ * @property {string} title      - Short subject line.
+ * @property {"active"|"completed"|"onhold"} status - Triage state.
  * @property {string} name       - Sender's name.
  * @property {string} email      - Sender's email.
  * @property {string} [phone]    - Sender's phone, if provided.
@@ -10,6 +13,16 @@ import api from "./client";
  * @property {string} [imageUrl] - Cloudinary URL of the uploaded image, if any.
  * @property {string} createdAt  - ISO timestamp, set by Mongoose.
  * @property {string} updatedAt  - ISO timestamp, set by Mongoose.
+ */
+
+/**
+ * @typedef {Object} FeedbackPage
+ * @property {string}     status - API status flag.
+ * @property {number}     total  - Total docs matching the filter (ignores pagination).
+ * @property {number}     count  - Number of docs in this page.
+ * @property {number}     page   - The 1-based page number returned.
+ * @property {number}     limit  - Page size.
+ * @property {Feedback[]} data   - This page's feedback docs.
  */
 
 /**
@@ -27,13 +40,27 @@ export const postFeedback = async (formData) => {
 };
 
 /**
- * Fetch every feedback submission (private — admin auth required).
- * NOTE: defined for completeness; not yet wired into the UI.
- * @returns {Promise<Feedback[]>} All feedback, newest first.
+ * Fetch a page of feedback submissions (private — admin auth required). Returns
+ * the full envelope (including `total`) so callers can drive "load more".
+ * @param {{ status?: string, sort?: string, page?: number, limit?: number }} [params]
+ *   Optional query params: status filter, sort key (creation_time / -creation_time
+ *   / updation_time / -updation_time), 1-based page, and page size.
+ * @returns {Promise<FeedbackPage>} The page envelope `{ total, count, page, limit, data }`.
  * @throws {Error} On a 401 (no/invalid token) or other non-2xx response.
  */
-export const getFeedback = async () => {
-  const res = await api.get("/feedback");
+export const getFeedback = async (params = {}) => {
+  const res = await api.get("/feedback", { params });
+  return res.data;
+};
+
+/**
+ * Fetch a single feedback submission by its f_id (private — admin auth required).
+ * @param {string} fId - The feedback's `f_id` (16-digit business id).
+ * @returns {Promise<Feedback>} The matching feedback document.
+ * @throws {Error} On a 401/404 or other non-2xx response.
+ */
+export const getFeedbackById = async (fId) => {
+  const res = await api.get(`/feedback/${fId}`);
   return res.data.data;
 };
 

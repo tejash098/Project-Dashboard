@@ -136,6 +136,7 @@ export const Z_INDEX = {
     DRAWER: "z-40",
     BACKDROP: "z-30",
     MODAL: "z-50", // overlays the drawer; used by the portal Modal + toasts
+    LIGHTBOX: "z-[60]", // sits above the modal/toasts; used by the image lightbox
 };
 
 // New group — responsive drawer behavior

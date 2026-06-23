@@ -1,7 +1,7 @@
 import { A11Y, ROUNDED, TRANSITION, TYPOGRAPHY } from "../../config/constants";
 
-/** Selectable filter values and their display labels. */
-const FILTERS = [
+/** Default filter values and their display labels (used by the Projects page). */
+const DEFAULT_FILTERS = [
   { value: "all", label: "All" },
   { value: "active", label: "Active" },
   { value: "completed", label: "Completed" },
@@ -9,23 +9,28 @@ const FILTERS = [
 
 /**
  * Controlled status-filter tab bar. Owns no state: it receives the current
- * filter and the counts, and reports changes upward, so any parent can drive it.
- * Each tab shows the count supplied by the parent.
+ * filter (and optionally per-value counts), and reports changes upward, so any
+ * parent can drive it. When `counts` is supplied each tab shows its count; when
+ * omitted (e.g. server-side filtering) tabs show just the label.
  *
  * @param {Object}   props
- * @param {string}   props.filter   - Currently selected filter value.
- * @param {Function} props.onChange - Called with the new value on click.
- * @param {{ total: number, active: number, completed: number }} props.counts -
- *   Status counts derived from the fetched project list.
+ * @param {string}   props.filter    - Currently selected filter value.
+ * @param {Function} props.onChange  - Called with the new value on click.
+ * @param {Array<{ value: string, label: string }>} [props.filters] - Tab set to
+ *   render; defaults to All/Active/Completed.
+ * @param {{ total: number, [status: string]: number }} [props.counts] - Optional
+ *   per-status counts; "all" maps to `total`. Omit to hide counts.
  */
-const FilterTabs = ({ filter, onChange, counts }) => {
-  /** Count for a given filter value ("all" maps to the total). */
-  const countFor = (value) => (value === "all" ? counts.total : counts[value]);
+const FilterTabs = ({ filter, onChange, filters = DEFAULT_FILTERS, counts }) => {
+  /** Count for a given filter value ("all" maps to the total), or undefined. */
+  const countFor = (value) =>
+    counts ? (value === "all" ? counts.total : counts[value]) : undefined;
 
   return (
     <div className="flex flex-wrap gap-2">
-      {FILTERS.map(({ value, label }) => {
+      {filters.map(({ value, label }) => {
         const isActive = filter === value;
+        const count = countFor(value);
 
         return (
           <button
@@ -39,7 +44,8 @@ const FilterTabs = ({ filter, onChange, counts }) => {
                   : "text-text-secondary hover:bg-accent-subtle hover:text-accent"
               }`}
           >
-            {label} ({countFor(value)})
+            {/* Show the count only when the parent supplies one. */}
+            {label}{count !== undefined ? ` (${count})` : ""}
           </button>
         );
       })}

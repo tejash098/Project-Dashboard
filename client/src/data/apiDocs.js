@@ -13,7 +13,16 @@
  * @type {{ baseUrl: string, intro: string, envelopeText: string, envelopeExample: object }}
  */
 export const API_OVERVIEW = {
-  baseUrl: "https://project-dashboard-m5mk.onrender.com",
+  // Use the configured API base URL when present (browser/Vite); fall back to
+  // the deployed URL under plain Node (the docs-markdown generator), where
+  // import.meta.env is undefined. Drop any trailing slash and a trailing `/api`
+  // (the endpoint paths below already include the `/api` prefix).
+  baseUrl: (
+    import.meta.env?.SERVER_BASE_URL ??
+    "https://project-dashboard-m5mk.onrender.com"
+  )
+    .replace(/\/+$/, "")
+    .replace(/\/api$/i, ""),
   intro:
     "The Project Dashboard API is a small REST service for managing portfolio " +
     "projects. Reads are public; writes require an admin bearer token. All " +
@@ -70,7 +79,7 @@ export const AUTH_INFO = {
  *
  * @type {Array<{
  *   id: string, method: "GET"|"POST"|"PUT"|"DELETE", path: string,
- *   description: string, auth: boolean, group: "Auth"|"Projects",
+ *   description: string, auth: boolean, group: "Auth"|"Projects"|"Feedback",
  *   queryParams?: Array<{ name: string, type: string, description: string }>,
  *   pathParams?: Array<{ name: string, type: string, description: string }>,
  *   requestBody?: object|null, responseExample: object,
@@ -332,6 +341,217 @@ export const ENDPOINTS = [
       { code: 500, meaning: "Server error" },
     ],
   },
+
+  // ── Feedback ──────────────────────────────────────────────────────────
+  {
+    id: "create-feedback",
+    method: "POST",
+    path: "/api/feedback",
+    description:
+      "Submit a contact-form feedback. Public — no auth required. Sent as " +
+      "multipart/form-data so an optional `image` file can ride along; the " +
+      "server uploads it to Cloudinary and stores the resulting URL. A unique " +
+      "16-digit `f_id` and `status: \"active\"` are assigned automatically.",
+    auth: false,
+    group: "Feedback",
+    requestBody: {
+      title: "Bug on the projects page",
+      name: "Grace Hopper",
+      email: "grace@example.com",
+      phone: "+1 555 0100",
+      message: "The filter tabs overlap on mobile.",
+    },
+    responseExample: {
+      status: "success",
+      data: {
+        _id: "665f1c2e9b1e4a0012a3b4d0",
+        f_id: "4821093746512083",
+        title: "Bug on the projects page",
+        status: "active",
+        name: "Grace Hopper",
+        email: "grace@example.com",
+        phone: "+1 555 0100",
+        message: "The filter tabs overlap on mobile.",
+        imageUrl: "https://res.cloudinary.com/<cloud>/image/upload/feedback/abc123.png",
+        createdAt: "2026-06-22T08:00:00.000Z",
+        updatedAt: "2026-06-22T08:00:00.000Z",
+      },
+    },
+    statusCodes: [
+      { code: 201, meaning: "Created" },
+      { code: 400, meaning: "Validation failed (missing/invalid fields)" },
+    ],
+  },
+  {
+    id: "list-feedback",
+    method: "GET",
+    path: "/api/feedback",
+    description:
+      "List feedback submissions. Requires admin auth. Supports status " +
+      "filtering, sorting, and pagination via query parameters. The response " +
+      "includes `total` (all matches) and `count` (rows on this page).",
+    auth: true,
+    group: "Feedback",
+    queryParams: [
+      {
+        name: "status",
+        type: "string",
+        description:
+          "Filter by 'active', 'completed', or 'onhold'. Omit to return all.",
+      },
+      {
+        name: "sort",
+        type: "string",
+        description:
+          "Order by creation_time | -creation_time | updation_time | " +
+          "-updation_time (default -creation_time, newest first).",
+      },
+      {
+        name: "page",
+        type: "number",
+        description: "1-based page number (default 1).",
+      },
+      {
+        name: "limit",
+        type: "number",
+        description: "Page size (default 15).",
+      },
+    ],
+    responseExample: {
+      status: "success",
+      total: 23,
+      count: 15,
+      page: 1,
+      limit: 15,
+      data: [
+        {
+          _id: "665f1c2e9b1e4a0012a3b4d0",
+          f_id: "4821093746512083",
+          title: "Bug on the projects page",
+          status: "active",
+          name: "Grace Hopper",
+          email: "grace@example.com",
+          message: "The filter tabs overlap on mobile.",
+          imageUrl: "https://res.cloudinary.com/<cloud>/image/upload/feedback/abc123.png",
+          createdAt: "2026-06-22T08:00:00.000Z",
+          updatedAt: "2026-06-22T08:00:00.000Z",
+        },
+      ],
+    },
+    statusCodes: [
+      { code: 200, meaning: "Success" },
+      { code: 401, meaning: "Missing, invalid, or expired token" },
+      { code: 500, meaning: "Server error" },
+    ],
+  },
+  {
+    id: "get-feedback",
+    method: "GET",
+    path: "/api/feedback/:id",
+    description:
+      "Fetch a single feedback by its `f_id`. Requires admin auth. Note the " +
+      "path identifier is the 16-digit `f_id`, not the Mongo `_id`.",
+    auth: true,
+    group: "Feedback",
+    pathParams: [
+      {
+        name: "id",
+        type: "string",
+        description: "The feedback's f_id (16-digit business id).",
+      },
+    ],
+    responseExample: {
+      status: "success",
+      data: {
+        _id: "665f1c2e9b1e4a0012a3b4d0",
+        f_id: "4821093746512083",
+        title: "Bug on the projects page",
+        status: "active",
+        name: "Grace Hopper",
+        email: "grace@example.com",
+        phone: "+1 555 0100",
+        message: "The filter tabs overlap on mobile.",
+        imageUrl: "https://res.cloudinary.com/<cloud>/image/upload/feedback/abc123.png",
+        createdAt: "2026-06-22T08:00:00.000Z",
+        updatedAt: "2026-06-22T08:00:00.000Z",
+      },
+    },
+    statusCodes: [
+      { code: 200, meaning: "Success" },
+      { code: 401, meaning: "Missing, invalid, or expired token" },
+      { code: 404, meaning: "No feedback with that f_id" },
+      { code: 500, meaning: "Server error" },
+    ],
+  },
+  {
+    id: "update-feedback",
+    method: "PUT",
+    path: "/api/feedback/:id",
+    description:
+      "Update a feedback by its `f_id`, returning the updated document. " +
+      "Requires admin auth. Editable fields: title, name, email, phone, " +
+      "message, status. Send as multipart/form-data with an `image` file to " +
+      "replace the uploaded image (the previous Cloudinary asset is removed).",
+    auth: true,
+    group: "Feedback",
+    pathParams: [
+      {
+        name: "id",
+        type: "string",
+        description: "The feedback's f_id to update.",
+      },
+    ],
+    requestBody: {
+      status: "completed",
+    },
+    responseExample: {
+      status: "success",
+      data: {
+        _id: "665f1c2e9b1e4a0012a3b4d0",
+        f_id: "4821093746512083",
+        title: "Bug on the projects page",
+        status: "completed",
+        name: "Grace Hopper",
+        email: "grace@example.com",
+        message: "The filter tabs overlap on mobile.",
+        updatedAt: "2026-06-22T10:30:00.000Z",
+      },
+    },
+    statusCodes: [
+      { code: 200, meaning: "Updated" },
+      { code: 400, meaning: "Validation failed" },
+      { code: 401, meaning: "Missing, invalid, or expired token" },
+      { code: 404, meaning: "No feedback with that f_id" },
+    ],
+  },
+  {
+    id: "delete-feedback",
+    method: "DELETE",
+    path: "/api/feedback/:id",
+    description:
+      "Delete a feedback by its `f_id`. Requires admin auth. Also removes the " +
+      "associated Cloudinary image. Returns a confirmation message rather than " +
+      "a `data` payload.",
+    auth: true,
+    group: "Feedback",
+    pathParams: [
+      {
+        name: "id",
+        type: "string",
+        description: "The feedback's f_id to delete.",
+      },
+    ],
+    responseExample: {
+      status: "success",
+      message: "Feedback deleted successfully",
+    },
+    statusCodes: [
+      { code: 200, meaning: "Deleted" },
+      { code: 401, meaning: "Missing, invalid, or expired token" },
+      { code: 404, meaning: "No feedback with that f_id" },
+      { code: 500, meaning: "Server error" },
+    ],
+  },
 ];
 
 /**
@@ -401,6 +621,82 @@ export const PROJECT_MODEL = [
     type: "string[]",
     required: false,
     notes: "Freeform category tags. Defaults to an empty array.",
+  },
+  {
+    field: "createdAt",
+    type: "string (ISO)",
+    required: false,
+    notes: "Creation timestamp, managed by Mongoose.",
+  },
+  {
+    field: "updatedAt",
+    type: "string (ISO)",
+    required: false,
+    notes: "Last-update timestamp, managed by Mongoose.",
+  },
+];
+
+/**
+ * The Feedback schema, field by field — drives the Feedback data-model table.
+ * Mirrors `server/src/models/Feedback.js` (plus Mongoose-managed fields).
+ *
+ * @type {Array<{ field: string, type: string, required: boolean, notes: string }>}
+ */
+export const FEEDBACK_MODEL = [
+  {
+    field: "_id",
+    type: "string",
+    required: false,
+    notes: "MongoDB document id, assigned automatically.",
+  },
+  {
+    field: "f_id",
+    type: "string",
+    required: false,
+    notes: "Unique 16-digit business id, generated on create; used in routes.",
+  },
+  {
+    field: "title",
+    type: "string",
+    required: true,
+    notes: "Short subject line; shown in the admin Report list.",
+  },
+  {
+    field: "status",
+    type: '"active" | "completed" | "onhold"',
+    required: false,
+    notes: 'Triage state. Defaults to "active".',
+  },
+  { field: "name", type: "string", required: true, notes: "Sender's name." },
+  {
+    field: "email",
+    type: "string",
+    required: true,
+    notes: "Sender's email (stored lowercased).",
+  },
+  {
+    field: "phone",
+    type: "string",
+    required: false,
+    notes: "Sender's phone, if provided.",
+  },
+  {
+    field: "message",
+    type: "string",
+    required: true,
+    notes: "The message body.",
+  },
+  {
+    field: "imageUrl",
+    type: "string",
+    required: false,
+    notes: "Cloudinary secure URL of the uploaded image, if any.",
+  },
+  {
+    field: "imagePublicId",
+    type: "string",
+    required: false,
+    notes: "Cloudinary public_id of the image, used for replace/delete.",
   },
   {
     field: "createdAt",

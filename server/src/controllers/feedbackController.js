@@ -1,8 +1,19 @@
 import Feedback from "../models/Feedback.js";
 import cloudinary from "../config/cloudinary.js";
 
-/** Text fields a client is allowed to set/change on a feedback document. */
-const EDITABLE_FIELDS = ["name", "email", "phone", "message"];
+/** Fields a client is allowed to set/change on a feedback document. */
+const EDITABLE_FIELDS = ["title", "name", "email", "phone", "message", "status"];
+
+/**
+ * Map a `?sort=` query value to a Mongoose sort spec. A leading `-` means
+ * descending; default is newest-created first. Mirrors the project controller.
+ */
+const SORT_MAP = {
+  creation_time: { createdAt: 1 },
+  "-creation_time": { createdAt: -1 },
+  updation_time: { updatedAt: 1 },
+  "-updation_time": { updatedAt: -1 },
+};
 
 /**
  * Upload a multer in-memory file to Cloudinary's `feedback` folder. Streams the
@@ -51,18 +62,56 @@ export const createFeedback = async (req, res) => {
 
 /**
  * GET /api/feedback  (private)
- * List every feedback submission, newest first.
- * @param {import("express").Request} req - Express request.
+ * List feedback submissions with optional `?status=` filtering, `?sort=` ordering
+ * (creation_time, -creation_time, updation_time, -updation_time; default newest
+ * first), and `?page=`/`?limit=` pagination (limit default 15).
+ * @param {import("express").Request} req - Express request; `req.query` may carry status/sort/page/limit.
  * @param {import("express").Response} res - Express response.
- * @returns {Promise<void>} Responds 200 `{ status: "success", count, data }`, or 500 `{ status: "error", message }`.
+ * @returns {Promise<void>} Responds 200 `{ status, total, count, page, limit, data }`, or 500 `{ status: "error", message }`.
  */
 export const getAllFeedback = async (req, res) => {
   try {
-    const feedback = await Feedback.find().sort({ createdAt: -1 });
-    console.log(`[feedback] list → ${feedback.length}`);
-    res.status(200).json({ status: "success", count: feedback.length, data: feedback });
+    // Optional status filter; empty filter returns everything.
+    const filter = req.query.status ? { status: req.query.status } : {};
+    const sort = SORT_MAP[req.query.sort] || SORT_MAP["-creation_time"];
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 15;
+    const skip = (page - 1) * limit;
+
+    // `total` ignores pagination (drives "load more"); `count` is this page's size.
+    const [data, total] = await Promise.all([
+      Feedback.find(filter).sort(sort).skip(skip).limit(limit),
+      Feedback.countDocuments(filter),
+    ]);
+    console.log(
+      `[feedback] list: filter=${JSON.stringify(filter)} sort=${JSON.stringify(sort)} page=${page} → ${data.length}/${total}`,
+    );
+    res.status(200).json({ status: "success", total, count: data.length, page, limit, data });
   } catch (error) {
     console.error("[feedback] list error:", error.message);
+    res.status(500).json({ status: "error", message: error.message });
+  }
+};
+
+/**
+ * GET /api/feedback/:id  (private)
+ * Fetch a single feedback document by its `f_id` (the route `:id` carries the
+ * f_id, not the Mongo _id).
+ * @param {import("express").Request} req - Express request; `req.params.id` is the f_id.
+ * @param {import("express").Response} res - Express response.
+ * @returns {Promise<void>} Responds 200 `{ status: "success", data }`, 404/500 `{ status: "error", message }`.
+ */
+export const getFeedbackByFId = async (req, res) => {
+  try {
+    console.log(`[feedback] get by f_id "${req.params.id}"`);
+    const feedback = await Feedback.findOne({ f_id: req.params.id });
+    if (!feedback) {
+      console.warn(`[feedback] f_id "${req.params.id}" not found`);
+      return res.status(404).json({ status: "error", message: "Feedback not found" });
+    }
+    res.status(200).json({ status: "success", data: feedback });
+  } catch (error) {
+    console.error("[feedback] get error:", error.message);
     res.status(500).json({ status: "error", message: error.message });
   }
 };

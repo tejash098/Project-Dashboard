@@ -379,9 +379,227 @@ Delete a project by slug. Requires admin auth. Returns a confirmation message ra
 | 404 | No project with that slug |
 | 500 | Server error |
 
+### Feedback
+
+#### POST /api/feedback
+
+Submit a contact-form feedback. Public — no auth required. Sent as multipart/form-data so an optional `image` file can ride along; the server uploads it to Cloudinary and stores the resulting URL. A unique 16-digit `f_id` and `status: "active"` are assigned automatically.
+
+**Auth required:** No
+
+**Request body**
+
+```json
+{
+  "title": "Bug on the projects page",
+  "name": "Grace Hopper",
+  "email": "grace@example.com",
+  "phone": "+1 555 0100",
+  "message": "The filter tabs overlap on mobile."
+}
+```
+
+**Response example**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "_id": "665f1c2e9b1e4a0012a3b4d0",
+    "f_id": "4821093746512083",
+    "title": "Bug on the projects page",
+    "status": "active",
+    "name": "Grace Hopper",
+    "email": "grace@example.com",
+    "phone": "+1 555 0100",
+    "message": "The filter tabs overlap on mobile.",
+    "imageUrl": "https://res.cloudinary.com/<cloud>/image/upload/feedback/abc123.png",
+    "createdAt": "2026-06-22T08:00:00.000Z",
+    "updatedAt": "2026-06-22T08:00:00.000Z"
+  }
+}
+```
+
+**Status codes**
+
+| Code | Meaning |
+| --- | --- |
+| 201 | Created |
+| 400 | Validation failed (missing/invalid fields) |
+
+#### GET /api/feedback
+
+List feedback submissions. Requires admin auth. Supports status filtering, sorting, and pagination via query parameters. The response includes `total` (all matches) and `count` (rows on this page).
+
+**Auth required:** Yes
+
+**Query parameters**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| status | string | Filter by 'active', 'completed', or 'onhold'. Omit to return all. |
+| sort | string | Order by creation_time \| -creation_time \| updation_time \| -updation_time (default -creation_time, newest first). |
+| page | number | 1-based page number (default 1). |
+| limit | number | Page size (default 15). |
+
+**Response example**
+
+```json
+{
+  "status": "success",
+  "total": 23,
+  "count": 15,
+  "page": 1,
+  "limit": 15,
+  "data": [
+    {
+      "_id": "665f1c2e9b1e4a0012a3b4d0",
+      "f_id": "4821093746512083",
+      "title": "Bug on the projects page",
+      "status": "active",
+      "name": "Grace Hopper",
+      "email": "grace@example.com",
+      "message": "The filter tabs overlap on mobile.",
+      "imageUrl": "https://res.cloudinary.com/<cloud>/image/upload/feedback/abc123.png",
+      "createdAt": "2026-06-22T08:00:00.000Z",
+      "updatedAt": "2026-06-22T08:00:00.000Z"
+    }
+  ]
+}
+```
+
+**Status codes**
+
+| Code | Meaning |
+| --- | --- |
+| 200 | Success |
+| 401 | Missing, invalid, or expired token |
+| 500 | Server error |
+
+#### GET /api/feedback/:id
+
+Fetch a single feedback by its `f_id`. Requires admin auth. Note the path identifier is the 16-digit `f_id`, not the Mongo `_id`.
+
+**Auth required:** Yes
+
+**Path parameters**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| id | string | The feedback's f_id (16-digit business id). |
+
+**Response example**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "_id": "665f1c2e9b1e4a0012a3b4d0",
+    "f_id": "4821093746512083",
+    "title": "Bug on the projects page",
+    "status": "active",
+    "name": "Grace Hopper",
+    "email": "grace@example.com",
+    "phone": "+1 555 0100",
+    "message": "The filter tabs overlap on mobile.",
+    "imageUrl": "https://res.cloudinary.com/<cloud>/image/upload/feedback/abc123.png",
+    "createdAt": "2026-06-22T08:00:00.000Z",
+    "updatedAt": "2026-06-22T08:00:00.000Z"
+  }
+}
+```
+
+**Status codes**
+
+| Code | Meaning |
+| --- | --- |
+| 200 | Success |
+| 401 | Missing, invalid, or expired token |
+| 404 | No feedback with that f_id |
+| 500 | Server error |
+
+#### PUT /api/feedback/:id
+
+Update a feedback by its `f_id`, returning the updated document. Requires admin auth. Editable fields: title, name, email, phone, message, status. Send as multipart/form-data with an `image` file to replace the uploaded image (the previous Cloudinary asset is removed).
+
+**Auth required:** Yes
+
+**Path parameters**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| id | string | The feedback's f_id to update. |
+
+**Request body**
+
+```json
+{
+  "status": "completed"
+}
+```
+
+**Response example**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "_id": "665f1c2e9b1e4a0012a3b4d0",
+    "f_id": "4821093746512083",
+    "title": "Bug on the projects page",
+    "status": "completed",
+    "name": "Grace Hopper",
+    "email": "grace@example.com",
+    "message": "The filter tabs overlap on mobile.",
+    "updatedAt": "2026-06-22T10:30:00.000Z"
+  }
+}
+```
+
+**Status codes**
+
+| Code | Meaning |
+| --- | --- |
+| 200 | Updated |
+| 400 | Validation failed |
+| 401 | Missing, invalid, or expired token |
+| 404 | No feedback with that f_id |
+
+#### DELETE /api/feedback/:id
+
+Delete a feedback by its `f_id`. Requires admin auth. Also removes the associated Cloudinary image. Returns a confirmation message rather than a `data` payload.
+
+**Auth required:** Yes
+
+**Path parameters**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| id | string | The feedback's f_id to delete. |
+
+**Response example**
+
+```json
+{
+  "status": "success",
+  "message": "Feedback deleted successfully"
+}
+```
+
+**Status codes**
+
+| Code | Meaning |
+| --- | --- |
+| 200 | Deleted |
+| 401 | Missing, invalid, or expired token |
+| 404 | No feedback with that f_id |
+| 500 | Server error |
+
 ## Data Model
 
-Fields of the Project resource.
+Fields of the Project and Feedback resources.
+
+### Project
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
@@ -396,6 +614,23 @@ Fields of the Project resource.
 | featured | boolean | No | Whether to highlight the project. Defaults to false. |
 | imageUrl | string | No | Thumbnail path, if any. |
 | tags | string[] | No | Freeform category tags. Defaults to an empty array. |
+| createdAt | string (ISO) | No | Creation timestamp, managed by Mongoose. |
+| updatedAt | string (ISO) | No | Last-update timestamp, managed by Mongoose. |
+
+### Feedback
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| _id | string | No | MongoDB document id, assigned automatically. |
+| f_id | string | No | Unique 16-digit business id, generated on create; used in routes. |
+| title | string | Yes | Short subject line; shown in the admin Report list. |
+| status | "active" \| "completed" \| "onhold" | No | Triage state. Defaults to "active". |
+| name | string | Yes | Sender's name. |
+| email | string | Yes | Sender's email (stored lowercased). |
+| phone | string | No | Sender's phone, if provided. |
+| message | string | Yes | The message body. |
+| imageUrl | string | No | Cloudinary secure URL of the uploaded image, if any. |
+| imagePublicId | string | No | Cloudinary public_id of the image, used for replace/delete. |
 | createdAt | string (ISO) | No | Creation timestamp, managed by Mongoose. |
 | updatedAt | string (ISO) | No | Last-update timestamp, managed by Mongoose. |
 

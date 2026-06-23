@@ -8,6 +8,7 @@ import { ROUNDED, TYPOGRAPHY } from "../../config/constants";
 const STATUS_CONFIG = {
   active: { label: "Active", className: "bg-accent-subtle text-accent" },
   completed: { label: "Completed", className: "bg-success-subtle text-success" },
+  onhold: { label: "On hold", className: "bg-warning-subtle text-warning" },
 };
 
 /** Fallback styling for an unrecognized status value. */

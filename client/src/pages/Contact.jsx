@@ -63,7 +63,7 @@ const INPUT_CLASS = `${WIDTH.FULL} ${ROUNDED.MD} border border-border bg-page-bg
   placeholder:text-text-secondary ${A11Y.FOCUS_RING}`;
 
 /** Initial (empty) state for the contact form fields. */
-const EMPTY_FORM = { name: "", email: "", phone: "", message: "" };
+const EMPTY_FORM = { title: "", name: "", email: "", phone: "", message: "" };
 
 /**
  * Contact page. A two-column layout: the left column lists personal contact
@@ -121,6 +121,7 @@ const Contact = () => {
     try {
       // Send as multipart so the optional image rides along as a real file.
       const formData = new FormData();
+      formData.append("title", form.title);
       formData.append("name", form.name);
       formData.append("email", form.email);
       formData.append("phone", form.phone);
@@ -135,6 +136,7 @@ const Contact = () => {
         EMAILJS_SERVICE_ID,
         EMAILJS_TEMPLATE_ID,
         {
+          from_title: form.title,
           from_name: form.name,
           from_email: form.email,
           from_phone: form.phone,
@@ -216,6 +218,22 @@ const Contact = () => {
         {/* ── Right — message form inside a Card ── */}
         <Card>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {/* Title — short subject; shown in the admin Report list. */}
+            <label className="flex flex-col gap-1">
+              <span className={`${TYPOGRAPHY.TEXT_XS} ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary`}>
+                Title
+              </span>
+              <input
+                type="text"
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                required
+                className={INPUT_CLASS}
+                placeholder="What's this about?"
+              />
+            </label>
+
             {/* Name */}
             <label className="flex flex-col gap-1">
               <span className={`${TYPOGRAPHY.TEXT_XS} ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary`}>

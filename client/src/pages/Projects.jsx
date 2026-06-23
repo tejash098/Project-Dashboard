@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import PageLayout from "../layouts/PageLayout";
 import FilterTabs from "../components/ui/FilterTabs";
 import ProjectCard from "../components/ui/ProjectCard";
@@ -9,13 +10,25 @@ import { getStatusCounts } from "../lib/projectStats";
 import { useAuth } from "../hooks/useAuth";
 import { GRID, SPACING, TYPOGRAPHY } from "../config/constants";
 
+/** Filter values that may be reflected in the `?status=` query param. */
+const VALID_FILTERS = ["active", "completed"];
+
 /**
  * Projects page — filterable, sorted grid of project cards fetched from the API.
- * Owns the filter state and drives the controlled FilterTabs. On first visit
- * (no view mode chosen yet) it prompts a visitor/admin gateway.
+ * The status filter is driven by the `?status=` query param so it can be
+ * deep-linked (e.g. the Dashboard stat cards link straight to a filtered view).
+ * On first visit (no view mode chosen yet) it prompts a visitor/admin gateway.
  */
 const Projects = () => {
-  const [filter, setFilter] = useState("all");
+  // Filter lives in the URL: read it from `?status=`, write it on tab change.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawStatus = searchParams.get("status");
+  const filter = VALID_FILTERS.includes(rawStatus) ? rawStatus : "all";
+
+  /** Update the `?status=` query param ("all" drops it for a clean URL). */
+  const setFilter = (value) => {
+    setSearchParams(value === "all" ? {} : { status: value }, { replace: true });
+  };
 
   // ── View-mode gateway ──
   const { viewMode, setViewMode } = useAuth();

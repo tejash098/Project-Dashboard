@@ -9,6 +9,7 @@ import {
   AUTH_INFO,
   ENDPOINTS,
   PROJECT_MODEL,
+  FEEDBACK_MODEL,
   STATUS_CODES,
 } from "../data/apiDocs";
 import { buildDocsMarkdown } from "../utils/docsMarkdown";
@@ -27,7 +28,7 @@ const SECTIONS = [
 ];
 
 /** Resource groups, in display order, used to bucket the endpoint cards. */
-const GROUPS = ["Auth", "Projects"];
+const GROUPS = ["Auth", "Projects", "Feedback"];
 
 /**
  * Section heading with an anchor id, shared across the page so the in-page nav
@@ -52,6 +53,54 @@ const Section = ({ id, title, subtitle, children }) => (
     )}
     <div className="mt-4">{children}</div>
   </section>
+);
+
+/**
+ * Data-model table — renders a resource schema (field / type / required / notes)
+ * inside a Card. Shared by the Project and Feedback models.
+ *
+ * @param {Object} props
+ * @param {Array<{ field: string, type: string, required: boolean, notes: string }>} props.rows
+ */
+const ModelTable = ({ rows }) => (
+  <Card>
+    <div className="overflow-x-auto">
+      <table className={`w-full text-left ${TYPOGRAPHY.TEXT_SM}`}>
+        <thead>
+          <tr className="border-b border-border">
+            <th className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}>
+              Field
+            </th>
+            <th className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}>
+              Type
+            </th>
+            <th className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}>
+              Required
+            </th>
+            <th className={`py-2 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}>
+              Notes
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ field, type, required, notes }) => (
+            <tr key={field} className="border-b border-border last:border-0">
+              <td className="py-2 pr-4 align-top">
+                <code className="font-mono text-text-primary">{field}</code>
+              </td>
+              <td className="py-2 pr-4 align-top">
+                <code className="font-mono text-text-secondary">{type}</code>
+              </td>
+              <td className="py-2 pr-4 align-top text-text-secondary">
+                {required ? "Yes" : "No"}
+              </td>
+              <td className="py-2 align-top text-text-secondary">{notes}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </Card>
 );
 
 /**
@@ -167,67 +216,21 @@ const Docs = () => {
         })}
       </Section>
 
-      {/* ── Data Model — the Project schema as a table ── */}
+      {/* ── Data Model — the Project + Feedback schemas as tables ── */}
       <Section
         id="data-model"
         title="Data Model"
-        subtitle="Fields of the Project resource."
+        subtitle="Fields of the Project and Feedback resources."
       >
-        <Card>
-          <div className="overflow-x-auto">
-            <table className={`w-full text-left ${TYPOGRAPHY.TEXT_SM}`}>
-              <thead>
-                <tr className="border-b border-border">
-                  <th
-                    className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}
-                  >
-                    Field
-                  </th>
-                  <th
-                    className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}
-                  >
-                    Type
-                  </th>
-                  <th
-                    className={`py-2 pr-4 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}
-                  >
-                    Required
-                  </th>
-                  <th
-                    className={`py-2 ${TYPOGRAPHY.FONT_MEDIUM} text-text-primary`}
-                  >
-                    Notes
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {PROJECT_MODEL.map(({ field, type, required, notes }) => (
-                  <tr
-                    key={field}
-                    className="border-b border-border last:border-0"
-                  >
-                    <td className="py-2 pr-4 align-top">
-                      <code className="font-mono text-text-primary">
-                        {field}
-                      </code>
-                    </td>
-                    <td className="py-2 pr-4 align-top">
-                      <code className="font-mono text-text-secondary">
-                        {type}
-                      </code>
-                    </td>
-                    <td className="py-2 pr-4 align-top text-text-secondary">
-                      {required ? "Yes" : "No"}
-                    </td>
-                    <td className="py-2 align-top text-text-secondary">
-                      {notes}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <h3 className={`${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary mb-3`}>
+          Project
+        </h3>
+        <ModelTable rows={PROJECT_MODEL} />
+
+        <h3 className={`${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary mt-6 mb-3`}>
+          Feedback
+        </h3>
+        <ModelTable rows={FEEDBACK_MODEL} />
       </Section>
 
       {/* ── Status Codes — global conventions table ── */}

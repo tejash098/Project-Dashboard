@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSidebar } from "../../hooks/useSidebar";
+import { useAuth } from "../../hooks/useAuth";
 import NavItem from "./NavItem";
 import navItems from "../../config/navItems";
 import {
@@ -23,6 +24,10 @@ import {
  */
 const Sidebar = () => {
   const { isOpen, toggle } = useSidebar();
+  const { isAdmin } = useAuth();
+
+  // Hide admin-only links (e.g. Report) from visitors.
+  const visibleNavItems = navItems.filter((item) => !item.adminOnly || isAdmin);
 
   /**
    * Close the drawer after navigation on mobile only.
@@ -66,7 +71,7 @@ const Sidebar = () => {
         className={`${FLEX.FLEX_1} ${SPACING.PY_4} ${SIZING.OVERFLOW_Y_AUTO}`}
         onClick={handleNavClick}
       >
-        {navItems.map(({ id, icon, label, path, end }) => (
+        {visibleNavItems.map(({ id, icon, label, path, end }) => (
           <NavItem
             key={id}
             icon={icon}

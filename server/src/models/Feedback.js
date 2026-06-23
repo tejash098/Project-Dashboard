@@ -15,6 +15,18 @@ const feedbackSchema = new mongoose.Schema(
       unique: true,
       default: generate16DigitId,
     },
+    // Short subject line — captured on the Contact form, shown in the admin Report list.
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    // Triage state, managed by admins from the Report page; new feedback is "active".
+    status: {
+      type: String,
+      enum: ["active", "completed", "onhold"],
+      default: "active",
+    },
     name: {
       type: String,
       required: true,
