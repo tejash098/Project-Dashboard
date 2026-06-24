@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import projectRoutes from "./routes/projectRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
+import techstackRoutes from "./routes/techstackRoutes.js";
 
 const app = express();
 
@@ -51,5 +52,8 @@ app.use("/api/projects", projectRoutes);
 
 // Feedback (contact-form) resource routes
 app.use("/api/feedback", feedbackRoutes);
+
+// Tech-stack catalog routes (powers the project tech picker)
+app.use("/api/techstacks", techstackRoutes);
 
 export default app;

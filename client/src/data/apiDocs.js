@@ -557,6 +557,70 @@ export const ENDPOINTS = [
       { code: 500, meaning: "Server error" },
     ],
   },
+
+  // ── TechStack ─────────────────────────────────────────────────────────
+  {
+    id: "list-techstacks",
+    method: "GET",
+    path: "/api/techstacks",
+    description:
+      "List the full tech-stack catalog, sorted by category then name. Public " +
+      "— powers the cascading category → tech picker on the Add/Edit Project " +
+      "forms.",
+    auth: false,
+    group: "TechStack",
+    responseExample: {
+      status: "success",
+      count: 93,
+      data: [
+        {
+          _id: "665f1c2e9b1e4a0012a3b4e0",
+          list_id: "4821093746512083",
+          name: "React",
+          category: "frontend",
+          createdAt: "2026-06-24T08:00:00.000Z",
+          updatedAt: "2026-06-24T08:00:00.000Z",
+        },
+      ],
+    },
+    statusCodes: [
+      { code: 200, meaning: "Success" },
+      { code: 500, meaning: "Server error" },
+    ],
+  },
+  {
+    id: "create-techstack",
+    method: "POST",
+    path: "/api/techstacks",
+    description:
+      "Add a tech to the catalog. Requires admin auth. Used by the picker's " +
+      '"add custom" path, which files new entries under "others". Idempotent on ' +
+      "(name, category): an existing case-insensitive match is returned as-is " +
+      "with 200 instead of creating a duplicate.",
+    auth: true,
+    group: "TechStack",
+    requestBody: {
+      name: "Astro",
+      category: "frontend",
+    },
+    responseExample: {
+      status: "success",
+      data: {
+        _id: "665f1c2e9b1e4a0012a3b4e1",
+        list_id: "5930148265913074",
+        name: "Astro",
+        category: "frontend",
+        createdAt: "2026-06-24T09:00:00.000Z",
+        updatedAt: "2026-06-24T09:00:00.000Z",
+      },
+    },
+    statusCodes: [
+      { code: 201, meaning: "Created" },
+      { code: 200, meaning: "Already exists — returns the existing entry" },
+      { code: 400, meaning: "Validation failed (missing name or bad category)" },
+      { code: 401, meaning: "Missing, invalid, or expired token" },
+    ],
+  },
 ];
 
 /**
@@ -718,6 +782,51 @@ export const FEEDBACK_MODEL = [
 ];
 
 /**
+ * The TechStack schema, field by field — drives the Tech Stack data-model table.
+ * Mirrors `server/src/models/TechStack.js` (plus Mongoose-managed fields).
+ *
+ * @type {Array<{ field: string, type: string, required: boolean, notes: string }>}
+ */
+export const TECHSTACK_MODEL = [
+  {
+    field: "_id",
+    type: "string",
+    required: false,
+    notes: "MongoDB document id, assigned automatically.",
+  },
+  {
+    field: "list_id",
+    type: "string",
+    required: false,
+    notes: "Unique 16-digit public id, generated on create.",
+  },
+  {
+    field: "name",
+    type: "string",
+    required: true,
+    notes: "Display name of the technology (e.g. \"React\").",
+  },
+  {
+    field: "category",
+    type: '"frontend" | "backend" | "fullstack" | "cloud" | "AI" | "cybersec" | "testing" | "others"',
+    required: true,
+    notes: "Group the tech belongs to in the picker. Custom adds use \"others\".",
+  },
+  {
+    field: "createdAt",
+    type: "string (ISO)",
+    required: false,
+    notes: "Creation timestamp, managed by Mongoose.",
+  },
+  {
+    field: "updatedAt",
+    type: "string (ISO)",
+    required: false,
+    notes: "Last-update timestamp, managed by Mongoose.",
+  },
+];
+
+/**
  * Global status-code conventions used across the API.
  * @type {Array<{ code: number, meaning: string }>}
  */
@@ -735,4 +844,37 @@ export const STATUS_CODES = [
   },
   { code: 404, meaning: "Not Found — no resource matches the identifier." },
   { code: 500, meaning: "Server Error — an unexpected failure occurred." },
+];
+
+/**
+ * Resource groups in display order — the single source of truth for bucketing
+ * endpoint cards (and the Markdown builder). Each value matches an endpoint's
+ * `group` field.
+ * @type {string[]}
+ */
+export const ENDPOINT_GROUPS = ["Auth", "Projects", "Feedback", "TechStack"];
+
+/**
+ * Data-model tables in display order. `group` ties each model to an endpoint
+ * group so the Data Model section can be filtered alongside the endpoints. Note
+ * the Auth resource has no persisted model and so is intentionally absent.
+ * @type {Array<{ group: string, title: string, rows: Array<{ field: string, type: string, required: boolean, notes: string }> }>}
+ */
+export const DATA_MODELS = [
+  { group: "Projects", title: "Project", rows: PROJECT_MODEL },
+  { group: "Feedback", title: "Feedback", rows: FEEDBACK_MODEL },
+  { group: "TechStack", title: "Tech Stack", rows: TECHSTACK_MODEL },
+];
+
+/**
+ * Resource filter options for the Docs page tab bar. `"all"` shows everything;
+ * the other values match `ENDPOINT_GROUPS` and filter Endpoints + Data Model.
+ * @type {Array<{ value: string, label: string }>}
+ */
+export const DOCS_RESOURCES = [
+  { value: "all", label: "All" },
+  { value: "Auth", label: "Auth" },
+  { value: "Projects", label: "Project" },
+  { value: "Feedback", label: "Feedback" },
+  { value: "TechStack", label: "Tech Stack" },
 ];

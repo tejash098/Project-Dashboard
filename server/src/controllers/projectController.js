@@ -1,5 +1,25 @@
 import Project from "../models/Project.js";
 import config from "../config/env.js";
+import { slugify } from "../utils/slugify.js";
+
+/**
+ * Derive a slug from a title that doesn't collide with an existing project.
+ * Starts from the plain slugified title and appends `-2`, `-3`, … until free.
+ * @param {string} title - The project title to base the slug on.
+ * @returns {Promise<string>} A slug guaranteed unique at query time.
+ */
+const generateUniqueSlug = async (title) => {
+  const base = slugify(title);
+  let slug = base;
+  let suffix = 2;
+  // Loop until no project owns this slug. The unique index is the final guard
+  // against a race, but in practice this single-admin app won't hit one.
+  while (await Project.findOne({ slug })) {
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+  return slug;
+};
 
 /**
  * GET /api/projects
@@ -77,7 +97,14 @@ export const getProjectBySlug = async (req, res) => {
 export const createProject = async (req, res) => {
   try {
     console.log(`[projects] create: fields=[${Object.keys(req.body).join(", ")}]`);
-    const project = await Project.create(req.body);
+    // The create form sends a title but no slug — derive a unique one. An
+    // explicit slug (e.g. from a seed/import) is respected as-is for back-compat.
+    const payload = { ...req.body };
+    if (!payload.slug && payload.title) {
+      payload.slug = await generateUniqueSlug(payload.title);
+      console.log(`[projects] create: generated slug "${payload.slug}"`);
+    }
+    const project = await Project.create(payload);
     console.log(`[projects] created "${project.slug}" (id ${project._id})`);
     res.status(201).json({ status: "success", data: project });
   } catch (error) {

@@ -1,6 +1,8 @@
 import AppShell from "./layouts/AppShell";
 import Dashboard from "./pages/Dashboard";
+import About from "./pages/About";
 import Projects from "./pages/Projects";
+import AddProject from "./pages/AddProject";
 import ProjectDetail from "./pages/ProjectDetail";
 import Docs from "./pages/Docs";
 import Contact from "./pages/Contact";
@@ -19,7 +21,17 @@ const App = () => {
         <AppShell>
             <Routes>
                 <Route path="/"             element={<Dashboard />} />
+                <Route path="/about"        element={<About />} />
                 <Route path="/projects"     element={<Projects />} />
+                {/* Admin-only create form — must precede ":slug" so "new" wins. */}
+                <Route
+                    path="/projects/new"
+                    element={
+                        <ProtectedRoute>
+                            <AddProject />
+                        </ProtectedRoute>
+                    }
+                />
                 <Route path="/projects/:slug" element={<ProjectDetail />} />
                 <Route path="/docs"         element={<Docs />} />
                 <Route path="/contact"      element={<Contact />} />

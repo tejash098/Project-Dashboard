@@ -10,3 +10,4 @@ export { default, AUTH_TOKEN_KEY, AUTH_ADMIN_KEY } from "./client";
 export * from "./project";
 export * from "./auth";
 export * from "./feedback";
+export * from "./techstack";

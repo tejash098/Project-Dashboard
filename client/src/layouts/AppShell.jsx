@@ -1,6 +1,7 @@
 import MenuIcon from "@mui/icons-material/Menu";
 import { useSidebar } from "../hooks/useSidebar";
 import Sidebar from "../components/nav/Sidebar";
+import Logo from "../components/ui/Logo";
 import {
   TRANSITION,
   HEIGHT,
@@ -72,7 +73,7 @@ const AppShell = ({ children }) => {
            page headings; hidden on desktop where controls live in the sidebar. */}
         <header
           className={`
-            md:hidden ${FLEX.CENTER} ${FLEX.SHRINK_0}
+            md:hidden ${FLEX.CENTER} ${FLEX.JUSTIFY_BETWEEN} ${FLEX.SHRINK_0}
             ${HEIGHT.TOPBAR} ${SPACING.PX_3}
             bg-sidebar-bg ${BORDER.BOTTOM} ${TRANSITION.COLORS_SLOW}
           `}
@@ -89,6 +90,9 @@ const AppShell = ({ children }) => {
           >
             <MenuIcon sx={{ fontSize: 22 }} />
           </button>
+
+          {/* Brand mark — always visible on mobile, links home. */}
+          <Logo size={32} />
         </header>
 
         <main

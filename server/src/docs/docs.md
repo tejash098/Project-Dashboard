@@ -595,9 +595,83 @@ Delete a feedback by its `f_id`. Requires admin auth. Also removes the associate
 | 404 | No feedback with that f_id |
 | 500 | Server error |
 
+### TechStack
+
+#### GET /api/techstacks
+
+List the full tech-stack catalog, sorted by category then name. Public — powers the cascading category → tech picker on the Add/Edit Project forms.
+
+**Auth required:** No
+
+**Response example**
+
+```json
+{
+  "status": "success",
+  "count": 93,
+  "data": [
+    {
+      "_id": "665f1c2e9b1e4a0012a3b4e0",
+      "list_id": "4821093746512083",
+      "name": "React",
+      "category": "frontend",
+      "createdAt": "2026-06-24T08:00:00.000Z",
+      "updatedAt": "2026-06-24T08:00:00.000Z"
+    }
+  ]
+}
+```
+
+**Status codes**
+
+| Code | Meaning |
+| --- | --- |
+| 200 | Success |
+| 500 | Server error |
+
+#### POST /api/techstacks
+
+Add a tech to the catalog. Requires admin auth. Used by the picker's "add custom" path, which files new entries under "others". Idempotent on (name, category): an existing case-insensitive match is returned as-is with 200 instead of creating a duplicate.
+
+**Auth required:** Yes
+
+**Request body**
+
+```json
+{
+  "name": "Astro",
+  "category": "frontend"
+}
+```
+
+**Response example**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "_id": "665f1c2e9b1e4a0012a3b4e1",
+    "list_id": "5930148265913074",
+    "name": "Astro",
+    "category": "frontend",
+    "createdAt": "2026-06-24T09:00:00.000Z",
+    "updatedAt": "2026-06-24T09:00:00.000Z"
+  }
+}
+```
+
+**Status codes**
+
+| Code | Meaning |
+| --- | --- |
+| 201 | Created |
+| 200 | Already exists — returns the existing entry |
+| 400 | Validation failed (missing name or bad category) |
+| 401 | Missing, invalid, or expired token |
+
 ## Data Model
 
-Fields of the Project and Feedback resources.
+Fields of each resource.
 
 ### Project
 
@@ -631,6 +705,17 @@ Fields of the Project and Feedback resources.
 | message | string | Yes | The message body. |
 | imageUrl | string | No | Cloudinary secure URL of the uploaded image, if any. |
 | imagePublicId | string | No | Cloudinary public_id of the image, used for replace/delete. |
+| createdAt | string (ISO) | No | Creation timestamp, managed by Mongoose. |
+| updatedAt | string (ISO) | No | Last-update timestamp, managed by Mongoose. |
+
+### Tech Stack
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| _id | string | No | MongoDB document id, assigned automatically. |
+| list_id | string | No | Unique 16-digit public id, generated on create. |
+| name | string | Yes | Display name of the technology (e.g. "React"). |
+| category | "frontend" \| "backend" \| "fullstack" \| "cloud" \| "AI" \| "cybersec" \| "testing" \| "others" | Yes | Group the tech belongs to in the picker. Custom adds use "others". |
 | createdAt | string (ISO) | No | Creation timestamp, managed by Mongoose. |
 | updatedAt | string (ISO) | No | Last-update timestamp, managed by Mongoose. |
 

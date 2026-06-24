@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import LaunchIcon from "@mui/icons-material/Launch";
 import GitHubIcon from "@mui/icons-material/GitHub";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PageLayout from "../layouts/PageLayout";
 import BackLink from "../components/ui/BackLink";
 import StatusBadge from "../components/ui/StatusBadge";
 import EditableField from "../components/ui/EditableField";
-import { fetchProjectBySlug, updateProject } from "../services/api";
+import TechStackPicker from "../components/ui/TechStackPicker";
+import Modal from "../components/ui/Modal";
+import { fetchProjectBySlug, updateProject, deleteProject } from "../services/api";
 import { formatDate } from "../lib/formatters";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
@@ -16,6 +20,7 @@ import {
   ROUNDED,
   SPACING,
   TYPOGRAPHY,
+  A11Y,
 } from "../config/constants";
 
 /** Options for the editable status field. */
@@ -30,6 +35,7 @@ const STATUS_OPTIONS = [
  */
 const ProjectDetail = () => {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { addToast } = useToast();
 
@@ -38,6 +44,16 @@ const ProjectDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [loadedSlug, setLoadedSlug] = useState(slug);
+
+  // ── Tech-stack inline editor (uses the cascading picker, not EditableField,
+  // whose blur-commit would fight the picker's native dropdowns) ──
+  const [techEditing, setTechEditing] = useState(false);
+  const [techDraft, setTechDraft] = useState([]);
+  const [techSaving, setTechSaving] = useState(false);
+
+  // ── Delete confirmation ──
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Reset to the loading state when navigating to a different slug. Adjusting
   // state during render (rather than inside the effect) is React's recommended
@@ -96,6 +112,47 @@ const ProjectDetail = () => {
       console.error(`[ProjectDetail] save "${field}" failed:`, message);
       addToast({ type: "error", message: `Couldn’t save: ${message}` });
       throw err; // let EditableField revert its draft
+    }
+  };
+
+  /** Enter tech-stack edit mode, seeding the draft from the current value. */
+  const startTechEdit = () => {
+    setTechDraft([...(project.techStack ?? [])]);
+    setTechEditing(true);
+  };
+
+  /** Persist the edited tech stack via the shared save handler. */
+  const saveTechStack = async () => {
+    if (techSaving) return;
+    setTechSaving(true);
+    try {
+      await handleSave("techStack", techDraft);
+      setTechEditing(false);
+    } catch {
+      // handleSave already toasted the error; keep the editor open for a retry.
+    } finally {
+      setTechSaving(false);
+    }
+  };
+
+  /**
+   * Delete this project after confirmation, then return to the project list.
+   * Keeps the modal open on failure so the admin can retry.
+   * @returns {Promise<void>}
+   */
+  const handleDelete = async () => {
+    if (deleting) return;
+    console.log(`[ProjectDetail] deleting "${slug}"…`);
+    setDeleting(true);
+    try {
+      await deleteProject(slug);
+      addToast({ type: "success", message: "Project deleted" });
+      navigate("/projects");
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || "Delete failed";
+      console.error(`[ProjectDetail] delete failed:`, message);
+      addToast({ type: "error", message: `Couldn’t delete: ${message}` });
+      setDeleting(false);
     }
   };
 
@@ -159,17 +216,33 @@ const ProjectDetail = () => {
           </EditableField>
         }
         actions={
-          // Editable status — StatusBadge in view mode, a select while editing.
-          <EditableField
-            value={status}
-            onSave={handleSave}
-            type="select"
-            fieldName="status"
-            canEdit={isAdmin}
-            options={STATUS_OPTIONS}
-          >
-            <StatusBadge status={status} />
-          </EditableField>
+          <>
+            {/* Editable status — StatusBadge in view mode, a select while editing. */}
+            <EditableField
+              value={status}
+              onSave={handleSave}
+              type="select"
+              fieldName="status"
+              canEdit={isAdmin}
+              options={STATUS_OPTIONS}
+            >
+              <StatusBadge status={status} />
+            </EditableField>
+
+            {/* Admin-only delete — opens a confirmation modal. */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(true)}
+                className={`inline-flex items-center gap-1 ${ROUNDED.MD} border border-border
+                  px-2 py-1 ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM} text-danger
+                  hover:bg-danger hover:text-white ${A11Y.FOCUS_RING}`}
+              >
+                <DeleteOutlineIcon sx={{ fontSize: ICON_SIZE.SM }} />
+                Delete
+              </button>
+            )}
+          </>
         }
       >
         {/* ── Full description — no clamp here ── */}
@@ -192,25 +265,65 @@ const ProjectDetail = () => {
           >
             Tech Stack
           </h2>
-          <EditableField
-            value={techStack}
-            onSave={handleSave}
-            type="tags"
-            fieldName="techStack"
-            canEdit={isAdmin}
-          >
-            <div className="flex flex-wrap gap-2">
-              {techStack?.map((tech) => (
-                <span
-                  key={tech}
-                  className={`${ROUNDED.MD} border border-border px-2 py-0.5
-                    ${TYPOGRAPHY.TEXT_XS} text-text-secondary`}
+          {techEditing ? (
+            // ── Edit mode — cascading picker + explicit Save/Cancel ──
+            <div className="flex flex-col gap-3">
+              <TechStackPicker
+                value={techDraft}
+                onChange={setTechDraft}
+                disabled={techSaving}
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={saveTechStack}
+                  disabled={techSaving}
+                  className={`${ROUNDED.MD} bg-accent px-3 py-1 ${TYPOGRAPHY.TEXT_SM}
+                    ${TYPOGRAPHY.FONT_MEDIUM} text-white hover:opacity-90
+                    disabled:opacity-60 ${A11Y.FOCUS_RING}`}
                 >
-                  {tech}
-                </span>
-              ))}
+                  {techSaving ? "Saving…" : "Save"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTechEditing(false)}
+                  disabled={techSaving}
+                  className={`${ROUNDED.MD} border border-border px-3 py-1
+                    ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary
+                    hover:text-accent disabled:opacity-60 ${A11Y.FOCUS_RING}`}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          </EditableField>
+          ) : (
+            // ── View mode — chips + a pencil affordance for admins ──
+            <span className="group/edit inline-flex items-start gap-1.5">
+              <div className="flex flex-wrap gap-2">
+                {techStack?.map((tech) => (
+                  <span
+                    key={tech}
+                    className={`${ROUNDED.MD} border border-border px-2 py-0.5
+                      ${TYPOGRAPHY.TEXT_XS} text-text-secondary`}
+                  >
+                    {tech}
+                  </span>
+                ))}
+              </div>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={startTechEdit}
+                  aria-label="Edit techStack"
+                  className={`shrink-0 text-text-secondary opacity-0
+                    group-hover/edit:opacity-100 focus:opacity-100
+                    hover:text-accent ${ROUNDED.SM} ${A11Y.FOCUS_RING}`}
+                >
+                  <EditOutlinedIcon sx={{ fontSize: ICON_SIZE.SM }} />
+                </button>
+              )}
+            </span>
+          )}
         </div>
 
         {/* ── Tags — muted #-prefixed pills ── */}
@@ -301,6 +414,39 @@ const ProjectDetail = () => {
           Created {formatDate(createdAt)} · Updated {formatDate(updatedAt)}
         </p>
       </PageLayout>
+
+      {/* ── Delete confirmation modal ── */}
+      <Modal
+        open={confirmOpen}
+        onClose={() => !deleting && setConfirmOpen(false)}
+        title="Delete project?"
+      >
+        <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
+          This permanently deletes “{title}”. This action can’t be undone.
+        </p>
+        <div className="flex items-center justify-end gap-2 mt-6">
+          <button
+            type="button"
+            onClick={() => setConfirmOpen(false)}
+            disabled={deleting}
+            className={`${ROUNDED.MD} border border-border px-3 py-1.5
+              ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary
+              hover:text-accent disabled:opacity-60 ${A11Y.FOCUS_RING}`}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className={`${ROUNDED.MD} bg-danger px-3 py-1.5 ${TYPOGRAPHY.TEXT_SM}
+              ${TYPOGRAPHY.FONT_MEDIUM} text-white hover:opacity-90
+              disabled:opacity-60 ${A11Y.FOCUS_RING}`}
+          >
+            {deleting ? "Deleting…" : "Delete"}
+          </button>
+        </div>
+      </Modal>
     </>
   );
 };

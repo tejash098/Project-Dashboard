@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSidebar } from "../../hooks/useSidebar";
 import { useAuth } from "../../hooks/useAuth";
 import NavItem from "./NavItem";
+import Logo from "../ui/Logo";
 import ThemeToggle from "../ui/ThemeToggle";
 import ProfileMenu from "../ui/ProfileMenu";
 import navItems from "../../config/navItems";
@@ -42,10 +43,20 @@ const Sidebar = () => {
 
   return (
     <aside className={`${FLEX.ROW} ${FLEX.COL} ${HEIGHT.FULL} ${WIDTH.FULL}`}>
-      {/* ── Collapse toggle button ── */}
+      {/* ── Header — brand logo + collapse toggle ──
+         Expanded: logo + wordmark on the left, chevron on the right.
+         Collapsed: logo mark and chevron stacked and centered (fits w-16). */}
       <div
-        className={`${FLEX.CENTER} ${HEIGHT.SIDEBAR_TOGGLE} ${FLEX.SHRINK_0} ${BORDER.BOTTOM} ${SPACING.PX_3}`}
+        className={`
+          ${FLEX.SHRINK_0} ${BORDER.BOTTOM} ${SPACING.PX_3}
+          ${
+            isOpen
+              ? `${FLEX.CENTER} ${FLEX.JUSTIFY_BETWEEN} ${HEIGHT.SIDEBAR_TOGGLE}`
+              : `${FLEX.ROW} ${FLEX.COL} ${FLEX.CENTER_JUSTIFY} ${SPACING.GAP_2} ${SPACING.PY_3}`
+          }
+        `}
       >
+        <Logo showWordmark={isOpen} size={28} onClick={handleNavClick} />
         <button
           onClick={toggle}
           title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
@@ -56,7 +67,6 @@ const Sidebar = () => {
                         text-text-secondary
                         hover:bg-accent-subtle hover:text-accent
                         ${TRANSITION.COLORS} ${A11Y.FOCUS_RING}
-                        ${SPACING.ML_AUTO}
                     `}
         >
           {isOpen ? (

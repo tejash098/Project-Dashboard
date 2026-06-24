@@ -1,16 +1,18 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import PageLayout from "../layouts/PageLayout";
 import Card from "../components/ui/Card";
 import CodeBlock from "../components/ui/CodeBlock";
 import CopyPageMenu from "../components/ui/CopyPageMenu";
 import EndpointCard from "../components/ui/EndpointCard";
+import FilterTabs from "../components/ui/FilterTabs";
 import {
   API_OVERVIEW,
   AUTH_INFO,
   ENDPOINTS,
-  PROJECT_MODEL,
-  FEEDBACK_MODEL,
   STATUS_CODES,
+  ENDPOINT_GROUPS,
+  DATA_MODELS,
+  DOCS_RESOURCES,
 } from "../data/apiDocs";
 import { buildDocsMarkdown } from "../utils/docsMarkdown";
 import { ROUNDED, TYPOGRAPHY } from "../config/constants";
@@ -26,9 +28,6 @@ const SECTIONS = [
   { id: "data-model", label: "Data Model" },
   { id: "status-codes", label: "Status Codes" },
 ];
-
-/** Resource groups, in display order, used to bucket the endpoint cards. */
-const GROUPS = ["Auth", "Projects", "Feedback"];
 
 /**
  * Section heading with an anchor id, shared across the page so the in-page nav
@@ -110,8 +109,26 @@ const ModelTable = ({ rows }) => (
  * the global status-code conventions.
  */
 const Docs = () => {
-  // Render the page to Markdown once — used by "Copy page" / "View as Markdown".
-  const markdown = useMemo(() => buildDocsMarkdown(), []);
+  // Resource filter — "all" shows everything; other values narrow the Endpoints
+  // and Data Model sections (Overview/Authentication/Status Codes stay full).
+  const [resource, setResource] = useState("all");
+
+  // Render the page to Markdown, scoped to the active filter so "Copy page"
+  // grabs exactly what's shown. Rebuilds when the filter changes.
+  const markdown = useMemo(
+    () => buildDocsMarkdown(undefined, resource),
+    [resource],
+  );
+
+  // Endpoint groups to show: all of them, or just the selected resource.
+  const visibleGroups =
+    resource === "all" ? ENDPOINT_GROUPS : [resource];
+
+  // Data-model tables to show (Auth has none → empty → note rendered below).
+  const visibleModels =
+    resource === "all"
+      ? DATA_MODELS
+      : DATA_MODELS.filter((m) => m.group === resource);
 
   return (
     <PageLayout
@@ -120,7 +137,7 @@ const Docs = () => {
       actions={<CopyPageMenu markdown={markdown} markdownUrl={DOCS_MD_URL} />}
     >
       {/* ── In-page nav — quick jumps to each section ── */}
-      <nav className="flex flex-wrap gap-2 mb-8">
+      <nav className="flex flex-wrap gap-2 mb-6">
         {SECTIONS.map(({ id, label }) => (
           <a
             key={id}
@@ -133,6 +150,20 @@ const Docs = () => {
           </a>
         ))}
       </nav>
+
+      {/* ── Resource filter — narrows Endpoints + Data Model to one resource ── */}
+      <div className="mb-8">
+        <p
+          className={`${TYPOGRAPHY.TEXT_XS} ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary mb-2`}
+        >
+          Filter by resource
+        </p>
+        <FilterTabs
+          filter={resource}
+          onChange={setResource}
+          filters={DOCS_RESOURCES}
+        />
+      </div>
 
       {/* ── Overview — intro, base URL, response envelope ── */}
       <Section id="overview" title="Overview">
@@ -196,11 +227,13 @@ const Docs = () => {
         title="Endpoints"
         subtitle="Reads are public; writes require an admin bearer token."
       >
-        {GROUPS.map((group) => {
+        {visibleGroups.map((group) => {
           const groupEndpoints = ENDPOINTS.filter((e) => e.group === group);
+          // Skip empty buckets so a filter never renders a stray heading.
+          if (groupEndpoints.length === 0) return null;
           return (
             <div key={group} className="mt-6 first:mt-0">
-              {/* Resource subheading (Auth, Projects). */}
+              {/* Resource subheading (Auth, Projects, …). */}
               <h3
                 className={`${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary mb-3`}
               >
@@ -216,21 +249,29 @@ const Docs = () => {
         })}
       </Section>
 
-      {/* ── Data Model — the Project + Feedback schemas as tables ── */}
+      {/* ── Data Model — one schema table per resource, filtered to match ── */}
       <Section
         id="data-model"
         title="Data Model"
-        subtitle="Fields of the Project and Feedback resources."
+        subtitle="Fields of each resource."
       >
-        <h3 className={`${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary mb-3`}>
-          Project
-        </h3>
-        <ModelTable rows={PROJECT_MODEL} />
-
-        <h3 className={`${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary mt-6 mb-3`}>
-          Feedback
-        </h3>
-        <ModelTable rows={FEEDBACK_MODEL} />
+        {visibleModels.length === 0 ? (
+          // e.g. the Auth resource has no persisted model.
+          <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
+            The Auth resource has no stored data model.
+          </p>
+        ) : (
+          visibleModels.map(({ group, title, rows }) => (
+            <div key={group} className="mt-6 first:mt-0">
+              <h3
+                className={`${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary mb-3`}
+              >
+                {title}
+              </h3>
+              <ModelTable rows={rows} />
+            </div>
+          ))
+        )}
       </Section>
 
       {/* ── Status Codes — global conventions table ── */}

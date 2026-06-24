@@ -1,4 +1,5 @@
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import PersonIcon from "@mui/icons-material/Person";
 import FolderIcon from "@mui/icons-material/Folder";
 import ArticleIcon from "@mui/icons-material/Article";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
@@ -15,6 +16,7 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
  */
 const navItems = [
   { id: 1, label: "Dashboard", path: "/", icon: DashboardIcon, end: true },
+  { id: 6, label: "About", path: "/about", icon: PersonIcon },
   { id: 2, label: "Projects", path: "/projects", icon: FolderIcon },
   { id: 3, label: "Docs", path: "/docs", icon: ArticleIcon },
   { id: 4, label: "Contact", path: "/contact", icon: ContactMailIcon },

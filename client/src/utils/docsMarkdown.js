@@ -2,9 +2,9 @@ import {
   API_OVERVIEW,
   AUTH_INFO,
   ENDPOINTS,
-  PROJECT_MODEL,
-  FEEDBACK_MODEL,
   STATUS_CODES,
+  ENDPOINT_GROUPS,
+  DATA_MODELS,
 } from "../data/apiDocs.js";
 
 /**
@@ -18,9 +18,15 @@ import {
  *
  * @param {string} [baseUrl] - Public base URL of the deployed page, prepended
  *   to a "View / source" note. Defaults to the API base URL in `apiDocs.js`.
+ * @param {string} [group] - Resource filter. `"all"` (default) renders every
+ *   resource; otherwise only the matching endpoint group + data model are
+ *   included (Overview, Authentication, and Status Codes are always full).
  * @returns {string} The complete documentation rendered as Markdown.
  */
-export const buildDocsMarkdown = (baseUrl = API_OVERVIEW.baseUrl) => {
+export const buildDocsMarkdown = (
+  baseUrl = API_OVERVIEW.baseUrl,
+  group = "all",
+) => {
   // Each section pushes its Markdown here; joined with blank lines at the end.
   const blocks = [];
 
@@ -79,14 +85,21 @@ export const buildDocsMarkdown = (baseUrl = API_OVERVIEW.baseUrl) => {
   blocks.push("### Login response");
   blocks.push(jsonFence(AUTH_INFO.loginResponse));
 
-  // ── Endpoints — grouped by resource, mirroring the page's GROUPS order ──
+  // ── Endpoints — grouped by resource, mirroring the page's group order.
+  // When a `group` filter is set, only that group is emitted. ──
   blocks.push("## Endpoints");
   blocks.push("Reads are public; writes require an admin bearer token.");
 
-  for (const group of ["Auth", "Projects", "Feedback"]) {
-    blocks.push(`### ${group}`);
+  const visibleGroups =
+    group === "all" ? ENDPOINT_GROUPS : ENDPOINT_GROUPS.filter((g) => g === group);
 
-    for (const endpoint of ENDPOINTS.filter((e) => e.group === group)) {
+  for (const groupName of visibleGroups) {
+    const groupEndpoints = ENDPOINTS.filter((e) => e.group === groupName);
+    if (groupEndpoints.length === 0) continue; // skip empty buckets
+
+    blocks.push(`### ${groupName}`);
+
+    for (const endpoint of groupEndpoints) {
       blocks.push(`#### ${endpoint.method} ${endpoint.path}`);
       blocks.push(endpoint.description);
       blocks.push(`**Auth required:** ${endpoint.auth ? "Yes" : "No"}`);
@@ -128,33 +141,32 @@ export const buildDocsMarkdown = (baseUrl = API_OVERVIEW.baseUrl) => {
     }
   }
 
-  // ── Data Model ────────────────────────────────────────────────────────
+  // ── Data Model — one table per resource, filtered alongside endpoints ──
   blocks.push("## Data Model");
-  blocks.push("Fields of the Project and Feedback resources.");
-  blocks.push("### Project");
-  blocks.push(
-    table(
-      ["Field", "Type", "Required", "Notes"],
-      PROJECT_MODEL.map((f) => [
-        f.field,
-        f.type,
-        f.required ? "Yes" : "No",
-        f.notes,
-      ]),
-    ),
-  );
-  blocks.push("### Feedback");
-  blocks.push(
-    table(
-      ["Field", "Type", "Required", "Notes"],
-      FEEDBACK_MODEL.map((f) => [
-        f.field,
-        f.type,
-        f.required ? "Yes" : "No",
-        f.notes,
-      ]),
-    ),
-  );
+  blocks.push("Fields of each resource.");
+
+  const visibleModels =
+    group === "all" ? DATA_MODELS : DATA_MODELS.filter((m) => m.group === group);
+
+  if (visibleModels.length === 0) {
+    // e.g. the Auth resource has no persisted model.
+    blocks.push("This resource has no stored data model.");
+  } else {
+    for (const model of visibleModels) {
+      blocks.push(`### ${model.title}`);
+      blocks.push(
+        table(
+          ["Field", "Type", "Required", "Notes"],
+          model.rows.map((f) => [
+            f.field,
+            f.type,
+            f.required ? "Yes" : "No",
+            f.notes,
+          ]),
+        ),
+      );
+    }
+  }
 
   // ── Status Codes ──────────────────────────────────────────────────────
   blocks.push("## Status Codes");

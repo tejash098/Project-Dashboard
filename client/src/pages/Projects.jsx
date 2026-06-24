@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import AddIcon from "@mui/icons-material/Add";
 import PageLayout from "../layouts/PageLayout";
 import FilterTabs from "../components/ui/FilterTabs";
 import ProjectCard from "../components/ui/ProjectCard";
@@ -8,7 +9,7 @@ import LoginModal from "../components/ui/LoginModal";
 import { fetchProjects } from "../services/api";
 import { getStatusCounts } from "../lib/projectStats";
 import { useAuth } from "../hooks/useAuth";
-import { GRID, SPACING, TYPOGRAPHY } from "../config/constants";
+import { GRID, SPACING, TYPOGRAPHY, ROUNDED, ICON_SIZE, A11Y } from "../config/constants";
 
 /** Filter values that may be reflected in the `?status=` query param. */
 const VALID_FILTERS = ["active", "completed"];
@@ -20,6 +21,8 @@ const VALID_FILTERS = ["active", "completed"];
  * On first visit (no view mode chosen yet) it prompts a visitor/admin gateway.
  */
 const Projects = () => {
+  const navigate = useNavigate();
+
   // Filter lives in the URL: read it from `?status=`, write it on tab change.
   const [searchParams, setSearchParams] = useSearchParams();
   const rawStatus = searchParams.get("status");
@@ -31,7 +34,7 @@ const Projects = () => {
   };
 
   // ── View-mode gateway ──
-  const { viewMode, setViewMode } = useAuth();
+  const { viewMode, setViewMode, isAdmin } = useAuth();
   // Open the gateway whenever the mode is still undecided for this session.
   const [gatewayOpen, setGatewayOpen] = useState(viewMode === null);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -104,7 +107,25 @@ const Projects = () => {
       />
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
 
-      <PageLayout title="Projects" subtitle="Browse and manage your projects">
+      <PageLayout
+        title="Projects"
+        subtitle="Browse and manage your projects"
+        actions={
+          // Admin-only — opens the create form on its own page (same tab).
+          isAdmin && (
+            <button
+              type="button"
+              onClick={() => navigate("/projects/new")}
+              className={`inline-flex items-center gap-1 ${ROUNDED.MD} bg-accent
+                px-3 py-2 ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM} text-white
+                hover:opacity-90 ${A11Y.FOCUS_RING}`}
+            >
+              <AddIcon sx={{ fontSize: ICON_SIZE.SM }} />
+              Add Project
+            </button>
+          )
+        }
+      >
       {/* ── Loading / error first, then the filtered grid ── */}
       {loading ? (
         <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary mt-6`}>
