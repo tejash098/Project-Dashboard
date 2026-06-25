@@ -10,6 +10,14 @@ import { useToast } from "../hooks/useToast";
 import { postFeedback } from "../services/api/feedback";
 import { GITHUB_USERNAME, GITHUB_PROFILE_URL } from "../config/github";
 import {
+  EMAIL,
+  EMAIL_HREF,
+  PHONE,
+  PHONE_HREF,
+  LINKEDIN_HANDLE,
+  LINKEDIN_URL,
+} from "../config/profile";
+import {
   ICON_SIZE,
   ROUNDED,
   TYPOGRAPHY,
@@ -23,24 +31,24 @@ const CONTACT_LINKS = [
     id: "email",
     icon: EmailIcon,
     label: "Email",
-    value: "jaitej123@gmail.com",
-    href: "mailto:jaitej123@gmail.com",
+    value: EMAIL,
+    href: EMAIL_HREF,
     external: false,
   },
   {
     id: "phone",
     icon: PhoneIcon,
     label: "Phone",
-    value: "+91 9102577699",
-    href: "tel:+919102577699",
+    value: PHONE,
+    href: PHONE_HREF,
     external: false,
   },
   {
     id: "linkedin",
     icon: LinkedInIcon,
     label: "LinkedIn",
-    value: "tejash-singh",
-    href: "https://www.linkedin.com/in/tejash-singh-892a15233/",
+    value: LINKEDIN_HANDLE,
+    href: LINKEDIN_URL,
     external: true,
   },
   {

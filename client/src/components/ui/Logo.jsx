@@ -1,13 +1,16 @@
 import { Link } from "react-router-dom";
 import { TYPOGRAPHY, FLEX, ROUNDED, A11Y } from "../../config/constants";
+import { cloudinary, CLOUDINARY_ASSETS } from "../../config/cloudinary";
 
 /**
  * Brand logo URL. Cloudinary transformation (`f_auto,q_auto,w_128,h_128,c_fit`)
  * serves an optimized ~128px asset instead of the full 500px original — crisp
  * at the 28–32px sizes we render, with a much smaller download.
  */
-const LOGO_URL =
-  "https://res.cloudinary.com/dh6dcstn6/image/upload/f_auto,q_auto,w_128,h_128,c_fit/v1782277965/primary-logo_zqlx1g.png";
+const LOGO_URL = cloudinary(
+  CLOUDINARY_ASSETS.primaryLogo,
+  "f_auto,q_auto,w_128,h_128,c_fit",
+);
 
 /**
  * Brand lockup — the square logo mark, optionally paired with the

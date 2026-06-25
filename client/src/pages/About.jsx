@@ -3,6 +3,7 @@ import PageLayout from "../layouts/PageLayout";
 import Card from "../components/ui/Card";
 // Bundled certificate PDF — Vite resolves this to a served asset URL.
 import nbpdclCert from "../assets/NBPDCL_cert.pdf";
+import { cloudinary, CLOUDINARY_ASSETS } from "../config/cloudinary";
 import {
   GRID,
   SPACING,
@@ -15,13 +16,11 @@ import {
 /** Cloudinary transform applied to every logo for a small, optimized asset. */
 const LOGO_TX = "f_auto,q_auto,w_96,h_96,c_fit";
 
-/** Build a transformed Cloudinary logo URL from the asset's version + path. */
-const logo = (versionPath) =>
-  `https://res.cloudinary.com/dh6dcstn6/image/upload/${LOGO_TX}/${versionPath}`;
+/** Build a transformed Cloudinary logo URL from a hosted asset's path. */
+const logo = (versionPath) => cloudinary(versionPath, LOGO_TX);
 
 /** Google Drive logo shown next to certificates that link to a Drive copy. */
-const DRIVE_LOGO =
-  "https://res.cloudinary.com/dh6dcstn6/image/upload/v1782410487/drive-logo_jp749f.png";
+const DRIVE_LOGO = cloudinary(CLOUDINARY_ASSETS.driveLogo);
 
 /** Short, punchy career objective shown at the top of the page. */
 const CAREER_OBJECTIVE =
@@ -44,7 +43,7 @@ const EDUCATION = [
     board: "Sikkim Manipal University",
     year: "2025",
     score: "7.5 CGPA",
-    logo: logo("v1782279218/smit-logo_n2x282.png"),
+    logo: logo(CLOUDINARY_ASSETS.smitLogo),
   },
   {
     id: 2,
@@ -53,7 +52,7 @@ const EDUCATION = [
     board: "CBSE",
     year: "2021",
     score: "90%",
-    logo: logo("v1782279304/aryan-logo_eilbdz.png"),
+    logo: logo(CLOUDINARY_ASSETS.aryanLogo),
   },
   {
     id: 3,
@@ -62,7 +61,7 @@ const EDUCATION = [
     board: "CBSE",
     year: "2019",
     score: "89.2%",
-    logo: logo("v1782279304/aryan-logo_eilbdz.png"),
+    logo: logo(CLOUDINARY_ASSETS.aryanLogo),
   },
 ];
 
@@ -77,7 +76,7 @@ const EXPERIENCE = [
     role: "Software Engineer Intern",
     org: "Projetly",
     period: "Jan 2026 – Jun 2026",
-    logo: logo("v1782279918/projetly-logo_rvjbfd.png"),
+    logo: logo(CLOUDINARY_ASSETS.projetlyLogo),
     description:
       "Built serverless integration backends on Azure Functions with MongoDB, " +
       "developing third-party app connectors that authenticate via OAuth2 and " +
@@ -90,7 +89,7 @@ const EXPERIENCE = [
     role: "Web Development Intern",
     org: "NBPDCL, Patna",
     period: "Jan 2025 – May 2025",
-    logo: logo("v1782279369/nbpdcl-logo_iybmae.jpg"),
+    logo: logo(CLOUDINARY_ASSETS.nbpdclLogo),
     description:
       "Worked on a city-wide survey management system built with React, Express, " +
       "and MongoDB — a dashboard for collecting field survey data and managing " +

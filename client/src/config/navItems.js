@@ -21,8 +21,10 @@ const navItems = [
   { id: 2, label: "Projects", path: "/projects", icon: FolderIcon },
   { id: 7, label: "GitHub", path: "/github", icon: GitHubIcon },
   { id: 4, label: "Contact", path: "/contact", icon: ContactMailIcon },
-  { id: 3, label: "Docs", path: "/docs", icon: ArticleIcon },
   { id: 5, label: "Report", path: "/report", icon: AssessmentIcon, end: true, adminOnly: true },
+  // Docs sits last for everyone — the admin-only Report above is hidden from
+  // visitors, so Docs is the final item regardless of the viewer.
+  { id: 3, label: "Docs", path: "/docs", icon: ArticleIcon },
 ];
 
 export default navItems;

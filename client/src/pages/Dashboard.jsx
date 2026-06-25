@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import GitHubCalendar from "react-github-calendar";
+import { GitHubCalendar } from "react-github-calendar";
 import PageLayout from "../layouts/PageLayout";
 import Card from "../components/ui/Card";
 import FeedbackCard from "../components/ui/FeedbackCard";
