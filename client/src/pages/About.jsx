@@ -1,6 +1,8 @@
 import LaunchIcon from "@mui/icons-material/Launch";
 import PageLayout from "../layouts/PageLayout";
 import Card from "../components/ui/Card";
+// Bundled certificate PDF — Vite resolves this to a served asset URL.
+import nbpdclCert from "../assets/NBPDCL_cert.pdf";
 import {
   GRID,
   SPACING,
@@ -16,6 +18,10 @@ const LOGO_TX = "f_auto,q_auto,w_96,h_96,c_fit";
 /** Build a transformed Cloudinary logo URL from the asset's version + path. */
 const logo = (versionPath) =>
   `https://res.cloudinary.com/dh6dcstn6/image/upload/${LOGO_TX}/${versionPath}`;
+
+/** Google Drive logo shown next to certificates that link to a Drive copy. */
+const DRIVE_LOGO =
+  "https://res.cloudinary.com/dh6dcstn6/image/upload/v1782410487/drive-logo_jp749f.png";
 
 /** Short, punchy career objective shown at the top of the page. */
 const CAREER_OBJECTIVE =
@@ -93,16 +99,19 @@ const EXPERIENCE = [
 ];
 
 /**
- * Certifications. `url` is intentionally empty for now — paste the certificate
- * link here later and the View button activates automatically.
- * @type {Array<{ id: number, title: string, issuer: string, url: string }>}
+ * Certifications. `url` activates the View button (a bundled PDF or external
+ * link); leave it empty to keep the button disabled until a link exists.
+ * `driveUrl` optionally adds a Google Drive icon-link beside the View button.
+ * @type {Array<{ id: number, title: string, issuer: string, url: string, driveUrl?: string }>}
  */
 const CERTIFICATIONS = [
   {
     id: 1,
     title: "Internship Completion Certificate — NBPDCL",
     issuer: "2025",
-    url: "",
+    url: nbpdclCert, // bundled PDF → opened by the View button
+    driveUrl:
+      "https://drive.google.com/file/d/1L-DmHZCmSznxEb_1EHNVI6sNEcVXAWPe/view?usp=drive_link",
   },
   {
     id: 2,
@@ -224,7 +233,7 @@ const About = () => {
       <section className="mt-10">
         <SectionHeading>Certifications</SectionHeading>
         <div className="flex flex-col gap-3">
-          {CERTIFICATIONS.map(({ id, title, issuer, url }) => (
+          {CERTIFICATIONS.map(({ id, title, issuer, url, driveUrl }) => (
             <Card key={id}>
               <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0">
@@ -237,33 +246,57 @@ const About = () => {
                     {issuer}
                   </p>
                 </div>
-                {/* Active link when a URL is present; disabled placeholder until then. */}
-                {url ? (
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-1 shrink-0 ${ROUNDED.MD}
-                      bg-accent px-3 py-1.5 ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM}
-                      text-white hover:opacity-90 ${A11Y.FOCUS_RING}`}
-                  >
-                    <LaunchIcon sx={{ fontSize: ICON_SIZE.SM }} />
-                    View
-                  </a>
-                ) : (
-                  <button
-                    type="button"
-                    disabled
-                    title="Certificate link coming soon"
-                    className={`inline-flex items-center gap-1 shrink-0 ${ROUNDED.MD}
-                      border border-border px-3 py-1.5 ${TYPOGRAPHY.TEXT_SM}
-                      ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary opacity-60
-                      cursor-not-allowed`}
-                  >
-                    <LaunchIcon sx={{ fontSize: ICON_SIZE.SM }} />
-                    View
-                  </button>
-                )}
+                {/* Actions: View (PDF/link) + an optional Google Drive icon-link. */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Active link when a URL is present; disabled placeholder until then. */}
+                  {url ? (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-1 ${ROUNDED.MD}
+                        bg-accent px-3 py-1.5 ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM}
+                        text-white hover:opacity-90 ${A11Y.FOCUS_RING}`}
+                    >
+                      <LaunchIcon sx={{ fontSize: ICON_SIZE.SM }} />
+                      View
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      title="Certificate link coming soon"
+                      className={`inline-flex items-center gap-1 ${ROUNDED.MD}
+                        border border-border px-3 py-1.5 ${TYPOGRAPHY.TEXT_SM}
+                        ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary opacity-60
+                        cursor-not-allowed`}
+                    >
+                      <LaunchIcon sx={{ fontSize: ICON_SIZE.SM }} />
+                      View
+                    </button>
+                  )}
+                  {/* Google Drive copy of the certificate, when available. */}
+                  {driveUrl && (
+                    <a
+                      href={driveUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Open in Google Drive"
+                      aria-label={`Open ${title} in Google Drive`}
+                      className={`inline-flex items-center ${ROUNDED.MD} border border-border
+                        p-1.5 hover:opacity-90 ${A11Y.FOCUS_RING}`}
+                    >
+                      <img
+                        src={DRIVE_LOGO}
+                        alt=""
+                        width={ICON_SIZE.MD}
+                        height={ICON_SIZE.MD}
+                        loading="lazy"
+                        className="object-contain"
+                      />
+                    </a>
+                  )}
+                </div>
               </div>
             </Card>
           ))}
