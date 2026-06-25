@@ -6,6 +6,7 @@ import AddProject from "./pages/AddProject";
 import ProjectDetail from "./pages/ProjectDetail";
 import Docs from "./pages/Docs";
 import Contact from "./pages/Contact";
+import GitHub from "./pages/GitHub";
 import Report from "./pages/Report";
 import ReportDetail from "./pages/ReportDetail";
 import NotFound from "./pages/NotFound";
@@ -33,6 +34,7 @@ const App = () => {
                     }
                 />
                 <Route path="/projects/:slug" element={<ProjectDetail />} />
+                <Route path="/github"       element={<GitHub />} />
                 <Route path="/docs"         element={<Docs />} />
                 <Route path="/contact"      element={<Contact />} />
                 {/* Admin-only feedback report (list + detail). */}

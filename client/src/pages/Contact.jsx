@@ -8,6 +8,7 @@ import PageLayout from "../layouts/PageLayout";
 import Card from "../components/ui/Card";
 import { useToast } from "../hooks/useToast";
 import { postFeedback } from "../services/api/feedback";
+import { GITHUB_USERNAME, GITHUB_PROFILE_URL } from "../config/github";
 import {
   ICON_SIZE,
   ROUNDED,
@@ -46,8 +47,8 @@ const CONTACT_LINKS = [
     id: "github",
     icon: GitHubIcon,
     label: "GitHub",
-    value: "tejash098",
-    href: "https://github.com/tejash098",
+    value: GITHUB_USERNAME,
+    href: GITHUB_PROFILE_URL,
     external: true,
   },
 ];

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import GitHubCalendar from "react-github-calendar";
 import PageLayout from "../layouts/PageLayout";
 import Card from "../components/ui/Card";
 import FeedbackCard from "../components/ui/FeedbackCard";
@@ -7,7 +8,9 @@ import { fetchProjects } from "../services/api";
 import { getFeedback } from "../services/api/feedback";
 import { getStatusCounts } from "../lib/projectStats";
 import { useAuth } from "../hooks/useAuth";
+import { useTheme } from "../hooks/useTheme";
 import { FEEDBACK_STATUSES } from "../config/feedbackStatus";
+import { GITHUB_USERNAME } from "../config/github";
 import { GRID, SPACING, TYPOGRAPHY } from "../config/constants";
 
 /** How many feedback items to pull for the dashboard overview. */
@@ -21,6 +24,8 @@ const FEEDBACK_LIMIT = 100;
  */
 const Dashboard = () => {
   const { isAdmin } = useAuth();
+  // Drives the contribution calendar's color scheme so it tracks the app theme.
+  const { theme } = useTheme();
 
   // ── Project stats lifecycle ──
   const [counts, setCounts] = useState({ total: 0, active: 0, completed: 0 });
@@ -121,6 +126,26 @@ const Dashboard = () => {
           ))}
         </div>
       )}
+
+      {/* ── GitHub activity — contribution calendar (visible to everyone) ── */}
+      <section className="mt-10">
+        <h2
+          className={`${TYPOGRAPHY.TEXT_2XL} ${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary mb-4`}
+        >
+          GitHub Activity
+        </h2>
+        <Card>
+          {/* Horizontal scroll keeps the full-year heatmap usable on narrow
+              screens instead of overflowing the card. */}
+          <div className="overflow-x-auto">
+            <GitHubCalendar
+              username={GITHUB_USERNAME}
+              colorScheme={theme}
+              fontSize={12}
+            />
+          </div>
+        </Card>
+      </section>
 
       {/* ── Feedback (admin-only) — cards grouped by status ── */}
       {isAdmin && (
