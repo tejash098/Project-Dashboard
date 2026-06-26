@@ -124,7 +124,7 @@ const Docs = () => {
   const visibleGroups =
     resource === "all" ? ENDPOINT_GROUPS : [resource];
 
-  // Data-model tables to show (Auth has none → empty → note rendered below).
+  // Data-model tables to show — every resource group (incl. Auth → Admin) has one.
   const visibleModels =
     resource === "all"
       ? DATA_MODELS
@@ -256,9 +256,9 @@ const Docs = () => {
         subtitle="Fields of each resource."
       >
         {visibleModels.length === 0 ? (
-          // e.g. the Auth resource has no persisted model.
+          // Fallback — shown only if a resource ever has no stored model.
           <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
-            The Auth resource has no stored data model.
+            This resource has no stored data model.
           </p>
         ) : (
           visibleModels.map(({ group, title, rows }) => (

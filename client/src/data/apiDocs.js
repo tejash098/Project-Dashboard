@@ -624,6 +624,84 @@ export const ENDPOINTS = [
 ];
 
 /**
+ * The Admin schema, field by field — drives the Auth data-model table.
+ * Mirrors `server/src/models/Admin.js` (plus the `fullName` virtual and
+ * Mongoose-managed fields). The `password` hash is stripped from every API
+ * response, so it is documented here for completeness but never returned.
+ *
+ * @type {Array<{ field: string, type: string, required: boolean, notes: string }>}
+ */
+export const ADMIN_MODEL = [
+  {
+    field: "_id",
+    type: "string",
+    required: false,
+    notes: "MongoDB document id, assigned automatically.",
+  },
+  {
+    field: "user_id",
+    type: "string",
+    required: false,
+    notes: "Unique 16-digit business id, generated on create.",
+  },
+  {
+    field: "username",
+    type: "string",
+    required: true,
+    notes: "Login identifier; unique, stored lowercased.",
+  },
+  {
+    field: "password",
+    type: "string",
+    required: true,
+    notes:
+      "Bcrypt hash set by a pre-save hook — stored only, never returned in any API response.",
+  },
+  {
+    field: "email",
+    type: "string",
+    required: false,
+    notes: "Admin email, stored lowercased.",
+  },
+  {
+    field: "firstName",
+    type: "string",
+    required: false,
+    notes: "Given name, if set.",
+  },
+  {
+    field: "lastName",
+    type: "string",
+    required: false,
+    notes: "Family name, if set.",
+  },
+  {
+    field: "fullName",
+    type: "string",
+    required: false,
+    notes: "Virtual — first + last name, derived (not stored).",
+  },
+  {
+    field: "role",
+    type: '"admin"',
+    required: false,
+    notes: 'Account role. Defaults to "admin".',
+  },
+  {
+    field: "createdAt",
+    type: "string (ISO)",
+    required: false,
+    notes: "Creation timestamp, managed by Mongoose.",
+  },
+  {
+    field: "updatedAt",
+    type: "string (ISO)",
+    required: false,
+    notes: "Last-update timestamp, managed by Mongoose.",
+  },
+];
+
+/**
  * The Project schema, field by field — drives the Data Model table.
  * Mirrors `server/src/models/Project.js` (plus Mongoose-managed fields).
  *
@@ -856,11 +934,13 @@ export const ENDPOINT_GROUPS = ["Auth", "Projects", "Feedback", "TechStack"];
 
 /**
  * Data-model tables in display order. `group` ties each model to an endpoint
- * group so the Data Model section can be filtered alongside the endpoints. Note
- * the Auth resource has no persisted model and so is intentionally absent.
+ * group so the Data Model section can be filtered alongside the endpoints. The
+ * Auth resource is backed by the Admin model (the `password` hash is never
+ * returned — see ADMIN_MODEL).
  * @type {Array<{ group: string, title: string, rows: Array<{ field: string, type: string, required: boolean, notes: string }> }>}
  */
 export const DATA_MODELS = [
+  { group: "Auth", title: "Admin", rows: ADMIN_MODEL },
   { group: "Projects", title: "Project", rows: PROJECT_MODEL },
   { group: "Feedback", title: "Feedback", rows: FEEDBACK_MODEL },
   { group: "TechStack", title: "Tech Stack", rows: TECHSTACK_MODEL },

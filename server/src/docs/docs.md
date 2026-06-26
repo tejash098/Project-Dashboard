@@ -673,6 +673,22 @@ Add a tech to the catalog. Requires admin auth. Used by the picker's "add custom
 
 Fields of each resource.
 
+### Admin
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| _id | string | No | MongoDB document id, assigned automatically. |
+| user_id | string | No | Unique 16-digit business id, generated on create. |
+| username | string | Yes | Login identifier; unique, stored lowercased. |
+| password | string | Yes | Bcrypt hash set by a pre-save hook — stored only, never returned in any API response. |
+| email | string | No | Admin email, stored lowercased. |
+| firstName | string | No | Given name, if set. |
+| lastName | string | No | Family name, if set. |
+| fullName | string | No | Virtual — first + last name, derived (not stored). |
+| role | "admin" | No | Account role. Defaults to "admin". |
+| createdAt | string (ISO) | No | Creation timestamp, managed by Mongoose. |
+| updatedAt | string (ISO) | No | Last-update timestamp, managed by Mongoose. |
+
 ### Project
 
 | Field | Type | Required | Notes |

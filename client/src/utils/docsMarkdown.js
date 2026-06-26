@@ -149,7 +149,7 @@ export const buildDocsMarkdown = (
     group === "all" ? DATA_MODELS : DATA_MODELS.filter((m) => m.group === group);
 
   if (visibleModels.length === 0) {
-    // e.g. the Auth resource has no persisted model.
+    // Fallback — every resource group currently has a model (Auth → Admin).
     blocks.push("This resource has no stored data model.");
   } else {
     for (const model of visibleModels) {
