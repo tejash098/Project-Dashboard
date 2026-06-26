@@ -34,3 +34,28 @@ export const fetchMe = async () => {
   const res = await api.get("/auth/me");
   return res.data.admin;
 };
+
+/**
+ * Create a new admin. Admin-only — the bearer token is attached by the request
+ * interceptor and the server rejects unauthenticated callers with 401.
+ * @param {{ username: string, password: string, email?: string, firstName?: string, lastName?: string }} payload - New admin fields.
+ * @returns {Promise<Admin>} The created admin profile (without the password hash).
+ * @throws {Error} On validation/duplicate (400) or auth (401) failure.
+ */
+export const createAdmin = async (payload) => {
+  const res = await api.post("/auth/admins", payload);
+  return res.data.admin;
+};
+
+/**
+ * Update an existing admin by id. Admin-only. Omit `password` (or send it empty)
+ * to leave the current password unchanged.
+ * @param {string} id - The admin's `_id`.
+ * @param {{ username?: string, email?: string, firstName?: string, lastName?: string, password?: string }} payload - Fields to change.
+ * @returns {Promise<Admin>} The updated admin profile.
+ * @throws {Error} On validation/duplicate (400), auth (401), or not-found (404).
+ */
+export const updateAdmin = async (id, payload) => {
+  const res = await api.put(`/auth/admins/${id}`, payload);
+  return res.data.admin;
+};

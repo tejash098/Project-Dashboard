@@ -89,6 +89,16 @@ const AuthProvider = ({ children }) => {
     console.log(`[AuthContext] login success → admin "${nextAdmin?.username}", viewMode=admin`);
   }, []);
 
+  /**
+   * Replace the in-memory + persisted admin profile. Used after a self-edit so
+   * the profile popover reflects the new name/email without a page reload.
+   * @param {Object} nextAdmin - The updated admin profile.
+   */
+  const applyAdmin = useCallback((nextAdmin) => {
+    setAdmin(nextAdmin);
+    localStorage.setItem(AUTH_ADMIN_KEY, JSON.stringify(nextAdmin));
+  }, []);
+
   // On mount with a stored token, re-confirm it against the server and refresh
   // the profile. A 401 there triggers the response interceptor's auto-logout.
   useEffect(() => {
@@ -127,7 +137,7 @@ const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ token, admin, isAdmin, viewMode, login, logout, setViewMode }}
+      value={{ token, admin, isAdmin, viewMode, login, logout, applyAdmin, setViewMode }}
     >
       {children}
     </AuthContext.Provider>

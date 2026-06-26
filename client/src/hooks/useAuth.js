@@ -11,6 +11,7 @@ import { AuthContext } from "../context/AuthContext";
  *   viewMode: "admin"|"visitor"|null,
  *   login: (username: string, password: string) => Promise<void>,
  *   logout: () => void,
+ *   applyAdmin: (admin: Object) => void,
  *   setViewMode: (mode: "admin"|"visitor"|null) => void,
  * }} Auth state and actions.
  */

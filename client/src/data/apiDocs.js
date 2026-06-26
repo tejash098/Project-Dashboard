@@ -144,6 +144,86 @@ export const ENDPOINTS = [
     ],
   },
 
+  {
+    id: "create-admin",
+    method: "POST",
+    path: "/api/auth/admins",
+    description:
+      "Create a new admin. Requires admin auth — only a logged-in admin can " +
+      "create another. `username` and `password` are required; `email`, " +
+      "`firstName`, and `lastName` are optional. The password is hashed server-" +
+      "side and never returned.",
+    auth: true,
+    group: "Auth",
+    requestBody: {
+      username: "ada",
+      password: "a-strong-password",
+      email: "ada@example.com",
+      firstName: "Ada",
+      lastName: "Lovelace",
+    },
+    responseExample: {
+      status: "success",
+      admin: {
+        _id: "665f1c2e9b1e4a0012a3b4c7",
+        user_id: "1384820621912773",
+        username: "ada",
+        email: "ada@example.com",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        fullName: "Ada Lovelace",
+        role: "admin",
+      },
+    },
+    statusCodes: [
+      { code: 201, meaning: "Created" },
+      { code: 400, meaning: "Missing fields or username already exists" },
+      { code: 401, meaning: "Missing, invalid, or expired token" },
+    ],
+  },
+  {
+    id: "update-admin",
+    method: "PUT",
+    path: "/api/auth/admins/:id",
+    description:
+      "Update an admin by id, returning the updated profile. Requires admin " +
+      "auth. Send only the fields to change; omit `password` (or send it empty) " +
+      "to keep the current one. Used by the profile popover to edit the signed-" +
+      "in admin.",
+    auth: true,
+    group: "Auth",
+    pathParams: [
+      {
+        name: "id",
+        type: "string",
+        description: "The admin's MongoDB `_id`.",
+      },
+    ],
+    requestBody: {
+      firstName: "Augusta",
+      lastName: "King",
+      email: "augusta@example.com",
+    },
+    responseExample: {
+      status: "success",
+      admin: {
+        _id: "665f1c2e9b1e4a0012a3b4c7",
+        username: "ada",
+        email: "augusta@example.com",
+        firstName: "Augusta",
+        lastName: "King",
+        fullName: "Augusta King",
+        role: "admin",
+      },
+    },
+    statusCodes: [
+      { code: 200, meaning: "Updated" },
+      { code: 400, meaning: "Validation failed or username already exists" },
+      { code: 401, meaning: "Missing, invalid, or expired token" },
+      { code: 404, meaning: "No admin with that id" },
+    ],
+  },
+
   // ── Projects ──────────────────────────────────────────────────────────
   {
     id: "list-projects",

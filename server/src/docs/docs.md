@@ -142,6 +142,98 @@ Return the profile of the currently authenticated admin. Requires a valid bearer
 | 404 | Admin no longer exists |
 | 500 | Server error |
 
+#### POST /api/auth/admins
+
+Create a new admin. Requires admin auth — only a logged-in admin can create another. `username` and `password` are required; `email`, `firstName`, and `lastName` are optional. The password is hashed server-side and never returned.
+
+**Auth required:** Yes
+
+**Request body**
+
+```json
+{
+  "username": "ada",
+  "password": "a-strong-password",
+  "email": "ada@example.com",
+  "firstName": "Ada",
+  "lastName": "Lovelace"
+}
+```
+
+**Response example**
+
+```json
+{
+  "status": "success",
+  "admin": {
+    "_id": "665f1c2e9b1e4a0012a3b4c7",
+    "user_id": "1384820621912773",
+    "username": "ada",
+    "email": "ada@example.com",
+    "firstName": "Ada",
+    "lastName": "Lovelace",
+    "fullName": "Ada Lovelace",
+    "role": "admin"
+  }
+}
+```
+
+**Status codes**
+
+| Code | Meaning |
+| --- | --- |
+| 201 | Created |
+| 400 | Missing fields or username already exists |
+| 401 | Missing, invalid, or expired token |
+
+#### PUT /api/auth/admins/:id
+
+Update an admin by id, returning the updated profile. Requires admin auth. Send only the fields to change; omit `password` (or send it empty) to keep the current one. Used by the profile popover to edit the signed-in admin.
+
+**Auth required:** Yes
+
+**Path parameters**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| id | string | The admin's MongoDB `_id`. |
+
+**Request body**
+
+```json
+{
+  "firstName": "Augusta",
+  "lastName": "King",
+  "email": "augusta@example.com"
+}
+```
+
+**Response example**
+
+```json
+{
+  "status": "success",
+  "admin": {
+    "_id": "665f1c2e9b1e4a0012a3b4c7",
+    "username": "ada",
+    "email": "augusta@example.com",
+    "firstName": "Augusta",
+    "lastName": "King",
+    "fullName": "Augusta King",
+    "role": "admin"
+  }
+}
+```
+
+**Status codes**
+
+| Code | Meaning |
+| --- | --- |
+| 200 | Updated |
+| 400 | Validation failed or username already exists |
+| 401 | Missing, invalid, or expired token |
+| 404 | No admin with that id |
+
 ### Projects
 
 #### GET /api/projects
