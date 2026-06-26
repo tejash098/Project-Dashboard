@@ -1,12 +1,23 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Modal from "./Modal";
 import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../../hooks/useToast";
 import { ROUNDED, TYPOGRAPHY, A11Y, WIDTH } from "../../config/constants";
 
 /** Shared input styling — kept as a static string for the Tailwind scanner. */
 const INPUT_CLASS = `${WIDTH.FULL} ${ROUNDED.MD} border border-border bg-page-bg
   px-3 py-2 ${TYPOGRAPHY.TEXT_SM} text-text-primary
   placeholder:text-text-secondary ${A11Y.FOCUS_RING}`;
+
+// Pre-filled subject/body for visitors who want to try the admin-only features.
+// Encoded into the Contact route so the form opens ready to send (still editable).
+const ADMIN_REQUEST_TITLE = "Request of admin credentials";
+const ADMIN_REQUEST_MESSAGE =
+  "I am interested in trying out the admin features. Could you please share demo credentials?";
+const CONTACT_PREFILL_PATH =
+  `/contact?title=${encodeURIComponent(ADMIN_REQUEST_TITLE)}` +
+  `&message=${encodeURIComponent(ADMIN_REQUEST_MESSAGE)}`;
 
 /**
  * Admin login modal. Renders a username/password form on a blurred backdrop
@@ -19,6 +30,7 @@ const INPUT_CLASS = `${WIDTH.FULL} ${ROUNDED.MD} border border-border bg-page-bg
  */
 const LoginModal = ({ open, onClose }) => {
   const { login } = useAuth();
+  const { addToast } = useToast();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -36,15 +48,21 @@ const LoginModal = ({ open, onClose }) => {
     setLoading(true);
     try {
       await login(username, password);
+      // Keep the entered name for the toast before we clear the inputs.
+      const loggedInAs = username;
       // Reset and close on success so the next open starts clean.
       setUsername("");
       setPassword("");
       onClose();
+      // Confirm the successful sign-in with a toast.
+      addToast({ type: "success", message: `Welcome back, ${loggedInAs}` });
     } catch (err) {
       // Surface the API's message (e.g. "Invalid username or password").
       const message = err.response?.data?.message || err.message || "Login failed";
       console.warn(`[LoginModal] login failed: ${message}`);
       setError(message);
+      // Surface the failure as a toast too, alongside the inline error.
+      addToast({ type: "error", message });
     } finally {
       setLoading(false);
     }
@@ -100,6 +118,19 @@ const LoginModal = ({ open, onClose }) => {
         >
           {loading ? "Signing in…" : "Sign in"}
         </button>
+
+        {/* Invite visitors to request demo credentials — the link opens the
+            Contact form pre-filled and closes this popup as it navigates. */}
+        <p className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary text-center`}>
+          Interested in trying the admin features?{" "}
+          <Link
+            to={CONTACT_PREFILL_PATH}
+            onClick={onClose}
+            className={`${TYPOGRAPHY.FONT_MEDIUM} text-accent hover:underline`}
+          >
+            Request credentials.
+          </Link>
+        </p>
       </form>
     </Modal>
   );

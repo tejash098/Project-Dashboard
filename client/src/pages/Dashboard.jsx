@@ -142,6 +142,11 @@ const Dashboard = () => {
               username={GITHUB_USERNAME}
               colorScheme={theme}
               fontSize={12}
+              // Shown in place of the heatmap when the contributions API can't
+              // be reached, instead of the library's default unstyled error.
+              errorMessage="Couldn`t load GitHub activity right now. Please try again later."
+              blockMargin={6}
+              blockRadius={1}
             />
           </div>
         </Card>

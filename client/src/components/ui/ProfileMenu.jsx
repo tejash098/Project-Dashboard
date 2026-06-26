@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import LogoutIcon from "@mui/icons-material/Logout";
 import LoginIcon from "@mui/icons-material/Login";
 import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../../hooks/useToast";
 import LoginModal from "./LoginModal";
 import {
   ROUNDED,
@@ -29,6 +30,7 @@ import {
  */
 const ProfileMenu = ({ compact = false, placement = "topbar" }) => {
   const { isAdmin, admin, logout } = useAuth();
+  const { addToast } = useToast();
 
   const [open, setOpen] = useState(false); // popover visibility (admin)
   const [loginOpen, setLoginOpen] = useState(false); // login modal (visitor)
@@ -127,6 +129,8 @@ const ProfileMenu = ({ compact = false, placement = "topbar" }) => {
             onClick={() => {
               setOpen(false);
               logout();
+              // Confirm the sign-out with a toast.
+              addToast({ type: "success", message: "Logged out successfully" });
             }}
             className={`mt-4 w-full ${FLEX.CENTER} gap-2 ${ROUNDED.MD}
               border border-border px-3 py-2 ${TYPOGRAPHY.TEXT_SM} text-text-secondary

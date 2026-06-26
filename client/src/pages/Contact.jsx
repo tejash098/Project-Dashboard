@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import emailjs from "@emailjs/browser";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
@@ -86,8 +87,16 @@ const EMPTY_FORM = { title: "", name: "", email: "", phone: "", message: "" };
  */
 const Contact = () => {
   const { addToast } = useToast();
+  const [searchParams] = useSearchParams();
 
-  const [form, setForm] = useState(EMPTY_FORM);
+  // Seed the title/message from the URL so deep links (e.g. the login popup's
+  // "Request credentials" link) can open the form pre-filled. Falls back to
+  // empty for a normal visit. Read once on mount via the lazy initializer.
+  const [form, setForm] = useState(() => ({
+    ...EMPTY_FORM,
+    title: searchParams.get("title") ?? "",
+    message: searchParams.get("message") ?? "",
+  }));
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   // Ref to the native file input so it can be cleared on reset (file inputs are
