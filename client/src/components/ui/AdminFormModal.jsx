@@ -133,7 +133,7 @@ const AdminFormModal = ({ open, mode = "create", admin = null, onClose, onSucces
               onChange={handleChange}
               autoComplete="given-name"
               className={INPUT_CLASS}
-              placeholder="Ada"
+              placeholder="John"
             />
           </label>
           <label className="flex flex-col gap-1 flex-1">
@@ -147,7 +147,7 @@ const AdminFormModal = ({ open, mode = "create", admin = null, onClose, onSucces
               onChange={handleChange}
               autoComplete="family-name"
               className={INPUT_CLASS}
-              placeholder="Lovelace"
+              placeholder="Doe"
             />
           </label>
         </div>
