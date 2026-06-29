@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import DescriptionIcon from "@mui/icons-material/Description";
+import ApiIcon from "@mui/icons-material/Api";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useToast } from "../../hooks/useToast";
 import {
@@ -66,8 +67,10 @@ const ITEM_CLASS = `w-full ${FLEX.CENTER} gap-2 ${ROUNDED.MD} px-3 py-2 text-lef
  * @param {string} props.markdown    - Rendered Markdown copied to the clipboard.
  * @param {string} props.markdownUrl - Public URL of the `.md` the AI prompt
  *   tells the assistant to read; also the target of "View as Markdown".
+ * @param {string} [props.swaggerUrl] - Optional route/URL for an interactive
+ *   Swagger UI view; when set, adds a "View in Swagger UI" menu item.
  */
-const CopyPageMenu = ({ markdown, markdownUrl }) => {
+const CopyPageMenu = ({ markdown, markdownUrl, swaggerUrl }) => {
   const { addToast } = useToast();
   const [open, setOpen] = useState(false); // dropdown visibility
   const containerRef = useRef(null);
@@ -168,6 +171,20 @@ const CopyPageMenu = ({ markdown, markdownUrl }) => {
             <DescriptionIcon sx={{ fontSize: ICON_SIZE.SM }} />
             View as Markdown
           </a>
+
+          {/* Interactive Swagger UI view — only when a target is provided. */}
+          {swaggerUrl && (
+            <a
+              role="menuitem"
+              href={swaggerUrl}
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
+              className={ITEM_CLASS}
+            >
+              <ApiIcon sx={{ fontSize: ICON_SIZE.SM }} />
+              View in Swagger UI
+            </a>
+          )}
 
           {/* Divider between local actions and the AI hand-offs. */}
           <div className={`my-1 border-t ${BORDER.DEFAULT}`} />

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import AppShell from "./layouts/AppShell";
 import Dashboard from "./pages/Dashboard";
 import About from "./pages/About";
@@ -10,8 +11,13 @@ import GitHub from "./pages/GitHub";
 import Report from "./pages/Report";
 import ReportDetail from "./pages/ReportDetail";
 import NotFound from "./pages/NotFound";
+import PageLayout from "./layouts/PageLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { Routes, Route } from "react-router-dom";
+
+// Lazy-loaded so swagger-ui-react (+ its CSS) ships in a separate chunk, keeping
+// it out of the main bundle for everyone who never opens the Swagger view.
+const ApiReference = lazy(() => import("./pages/ApiReference"));
 
 /**
  * Root application component.
@@ -20,6 +26,11 @@ import { Routes, Route } from "react-router-dom";
 const App = () => {
     return (
         <AppShell>
+            <Suspense
+                fallback={
+                    <PageLayout title="API Reference" subtitle="Loading…" />
+                }
+            >
             <Routes>
                 <Route path="/"             element={<Dashboard />} />
                 <Route path="/about"        element={<About />} />
@@ -36,6 +47,8 @@ const App = () => {
                 <Route path="/projects/:slug" element={<ProjectDetail />} />
                 <Route path="/github"       element={<GitHub />} />
                 <Route path="/docs"         element={<Docs />} />
+                {/* Interactive Swagger UI view — lazy-loaded separate chunk. */}
+                <Route path="/docs/swagger" element={<ApiReference />} />
                 <Route path="/contact"      element={<Contact />} />
                 {/* Admin-only feedback report (list + detail). */}
                 <Route
@@ -57,6 +70,7 @@ const App = () => {
                 {/* Catch-all — must stay last so specific routes win first. */}
                 <Route path="*"             element={<NotFound />} />
             </Routes>
+            </Suspense>
         </AppShell>
     );
 };

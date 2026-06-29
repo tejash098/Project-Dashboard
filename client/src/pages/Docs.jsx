@@ -134,7 +134,13 @@ const Docs = () => {
     <PageLayout
       title="API Documentation"
       subtitle="Reference for the Project Dashboard REST API"
-      actions={<CopyPageMenu markdown={markdown} markdownUrl={DOCS_MD_URL} />}
+      actions={
+        <CopyPageMenu
+          markdown={markdown}
+          markdownUrl={DOCS_MD_URL}
+          swaggerUrl="/docs/swagger"
+        />
+      }
     >
       {/* ── In-page nav — quick jumps to each section ── */}
       <nav className="flex flex-wrap gap-2 mb-6">
