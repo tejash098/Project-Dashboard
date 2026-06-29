@@ -2,10 +2,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
-import ThemeProvider from './context/ThemeContext.jsx'
-import AuthProvider from './context/AuthContext.jsx'
-import ToastProvider from './context/ToastContext.jsx'
-import SidebarProvider from './context/SidebarContext.jsx'
+import ThemeProvider from './context/ThemeProvider.jsx'
+import AuthProvider from './context/AuthProvider.jsx'
+import ToastProvider from './context/ToastProvider.jsx'
+import SidebarProvider from './context/SidebarProvider.jsx'
 import { BrowserRouter } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";

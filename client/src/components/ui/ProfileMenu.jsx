@@ -94,7 +94,7 @@ const ProfileMenu = ({ compact = false, placement = "topbar" }) => {
   }
 
   // First letter of the username for the avatar (fallback "A").
-  const initial = (admin?.username?.[0] ?? "A").toUpperCase();
+  const initial = (admin?.fullName?.[0] ?? "A").toUpperCase();
 
   // ── Admin — avatar + details popover ──
   return (

@@ -1,11 +1,6 @@
-import { createContext, useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import Toast from "../components/ui/Toast";
-
-/**
- * Context object for the toast notification queue.
- * Consumed via the useToast hook.
- */
-export const ToastContext = createContext();
+import { ToastContext } from "./ToastContext";
 
 /** How long (ms) a toast stays on screen before auto-dismissing. */
 const TOAST_TTL = 3500;

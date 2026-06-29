@@ -1,10 +1,5 @@
-import { createContext, useState, useEffect } from "react";
-
-/**
- * Context object for theme state.
- * Consumed via the useTheme hook.
- */
-export const ThemeContext = createContext();
+import { useState, useEffect } from "react";
+import { ThemeContext } from "./ThemeContext";
 
 /**
  * Provides light/dark theme state to the component tree.

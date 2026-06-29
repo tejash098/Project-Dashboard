@@ -2,6 +2,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { useSidebar } from "../hooks/useSidebar";
 import Sidebar from "../components/nav/Sidebar";
 import Logo from "../components/ui/Logo";
+import FeedbackWidget from "../components/ui/FeedbackWidget";
 import {
   TRANSITION,
   HEIGHT,
@@ -101,6 +102,9 @@ const AppShell = ({ children }) => {
           {children}
         </main>
       </div>
+
+      {/* ── Global feedback tab — fixed to the right edge on every page ── */}
+      <FeedbackWidget />
     </div>
   );
 };

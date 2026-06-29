@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   loginRequest,
   fetchMe,
@@ -6,12 +6,7 @@ import {
   AUTH_ADMIN_KEY,
 } from "../services/api";
 import { isTokenExpired } from "../lib/jwt";
-
-/**
- * Context object for authentication + view-mode state.
- * Consumed via the useAuth hook.
- */
-export const AuthContext = createContext();
+import { AuthContext } from "./AuthContext";
 
 /**
  * Read the persisted token from localStorage, discarding it if already expired.

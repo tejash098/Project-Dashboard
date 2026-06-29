@@ -1,10 +1,5 @@
-import { createContext, useState } from "react";
-
-/**
- * Context object for sidebar open/closed state.
- * Consumed via the useSidebar hook.
- */
-export const SidebarContext = createContext()
+import { useState } from "react";
+import { SidebarContext } from "./SidebarContext";
 
 /**
  * Provides sidebar open/closed state to the component tree.

@@ -64,6 +64,9 @@ const Report = () => {
 
   // Reload from page 1 whenever the filter or sort changes (and on mount).
   useEffect(() => {
+    // load() flips loading/error synchronously to drive the spinner — an
+    // intentional async-fetch transition, not a cascading-render bug.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load(1, true);
   }, [load]);
 

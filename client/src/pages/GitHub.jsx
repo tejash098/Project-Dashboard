@@ -1,9 +1,28 @@
 import { useEffect, useState } from "react";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import PageLayout from "../layouts/PageLayout";
 import RepoCard from "../components/ui/RepoCard";
 import { fetchGitHubRepos } from "../services/api/github";
-import { GITHUB_USERNAME } from "../config/github";
-import { GRID, SPACING, TYPOGRAPHY } from "../config/constants";
+import {
+  GITHUB_USERNAME,
+  GITHUB_PROFILE_URL,
+  GITHUB_REPOS_URL,
+} from "../config/github";
+import {
+  GRID,
+  SPACING,
+  TYPOGRAPHY,
+  ROUNDED,
+  BORDER,
+  A11Y,
+  ICON_SIZE,
+} from "../config/constants";
+
+/** Outlined header-link styling — matches the docs "Copy page" button. */
+const HEADER_LINK_CLASS = `inline-flex items-center gap-1.5 ${ROUNDED.MD} border ${BORDER.DEFAULT}
+  px-3 py-1.5 ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary
+  hover:bg-accent-subtle hover:text-accent ${A11Y.FOCUS_RING}`;
 
 /**
  * GitHub page — a grid of the user's public repositories fetched live from the
@@ -36,7 +55,34 @@ const GitHub = () => {
   }, []);
 
   return (
-    <PageLayout title="GitHub" subtitle="My public repositories">
+    <PageLayout
+      title="GitHub"
+      subtitle="My public repositories"
+      actions={
+        <>
+          {/* Jump to the repositories tab on github.com (new tab). */}
+          <a
+            href={GITHUB_REPOS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={HEADER_LINK_CLASS}
+          >
+            <FolderOpenIcon sx={{ fontSize: ICON_SIZE.SM }} />
+            Open repos
+          </a>
+          {/* Jump to the GitHub profile (new tab). */}
+          <a
+            href={GITHUB_PROFILE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={HEADER_LINK_CLASS}
+          >
+            <GitHubIcon sx={{ fontSize: ICON_SIZE.SM }} />
+            Open profile
+          </a>
+        </>
+      }
+    >
       {/* ── Loading / error first, then the repo grid ── */}
       {loading ? (
         <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary mt-6`}>
