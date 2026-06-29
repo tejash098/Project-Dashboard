@@ -48,12 +48,16 @@ const AppShell = ({ children }) => {
 
       {/* ── Sidebar wrapper ──
          Desktop: static, width toggles (w-56 / w-16).
-          Mobile: fixed drawer (w-64), slides via translate-x. */}
+          Mobile: fixed drawer (w-64), slides via translate-x.
+         Keeps z-40 on desktop (not z-auto): the wrapper's translate-x creates a
+         stacking context, so without a positive z-index the account popover's
+         z-50 would be trapped below page content (e.g. Docs code blocks). z-40
+         stays under the portaled modals/toasts (z-50), which still cover it. */}
       <div
         className={`
         h-full bg-sidebar-bg border-r border-border
         fixed top-0 left-0 z-40
-        md:static md:z-auto md:shrink-0
+        md:static md:shrink-0
         w-64
         transition-transform md:transition-all duration-300 ease-in-out
         motion-reduce:transition-none
