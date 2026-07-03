@@ -1,5 +1,13 @@
 import LaunchIcon from "@mui/icons-material/Launch";
 import DownloadIcon from "@mui/icons-material/Download";
+import SchoolIcon from "@mui/icons-material/School";
+import WorkIcon from "@mui/icons-material/Work";
+// Timeline styles are imported globally in index.css inside a low-priority
+// cascade layer so Tailwind utilities keep control of the card content.
+import {
+  VerticalTimeline,
+  VerticalTimelineElement,
+} from "react-vertical-timeline-component";
 import PageLayout from "../layouts/PageLayout";
 import Card from "../components/ui/Card";
 // Bundled certificate PDFs — Vite resolves each to a served asset URL.
@@ -11,8 +19,6 @@ import class10Cert from "../assets/CLASS10_cert.pdf";
 import tejashCV from "../assets/Tejash_CV.pdf";
 import { cloudinary, CLOUDINARY_ASSETS } from "../config/cloudinary";
 import {
-  GRID,
-  SPACING,
   TYPOGRAPHY,
   ROUNDED,
   BORDER,
@@ -141,6 +147,28 @@ const CERTIFICATIONS = [
   },
 ];
 
+/**
+ * Shared VerticalTimelineElement overrides. The library paints its own white
+ * content box, arrow, and icon ring; these swap that chrome for theme tokens
+ * (so the timeline tracks light/dark mode) and make the content box invisible
+ * so the inner <Card> stays the only visible surface — same card UI as before.
+ */
+const TIMELINE_CONTENT_STYLE = {
+  background: "transparent",
+  boxShadow: "none",
+  padding: 0,
+};
+
+/** Pointer arrow from the card toward the line — matches the card border. */
+const TIMELINE_ARROW_STYLE = { borderRight: "7px solid var(--color-border)" };
+
+/** Accent timeline dot with a theme-aware ring (lib default is white-on-white). */
+const TIMELINE_ICON_STYLE = {
+  background: "var(--color-accent)",
+  color: "#fff",
+  boxShadow: "0 0 0 4px var(--color-border)",
+};
+
 /** Shared section heading. */
 const SectionHeading = ({ children }) => (
   <h2
@@ -233,8 +261,9 @@ const CertActions = ({ url, driveUrl, label }) => (
 );
 
 /**
- * About Me page — a public profile page with a career objective plus
- * Education, Experience, and Certifications sections rendered from local data.
+ * About Me page — a public profile page with a career objective and
+ * Certifications cards, followed by Education and Experience rendered as
+ * scroll-animated vertical timelines. All sections come from local data.
  */
 const About = () => {
   return (
@@ -269,74 +298,6 @@ const About = () => {
         </Card>
       </section>
 
-      {/* ── Education — one logo card per qualification ── */}
-      <section className="mt-10">
-        <SectionHeading>Education</SectionHeading>
-        <div className={`${GRID.STATS} ${SPACING.GAP_4}`}>
-          {EDUCATION.map(({ id, degree, institute, board, year, score, logo: src, url, driveUrl }) => (
-            <Card key={id} className="h-full">
-              {/* Full-height column so the actions pin to the card bottom. */}
-              <div className="flex h-full flex-col">
-                <div className="flex items-start gap-3 mb-2">
-                  <LogoBadge src={src} alt={institute} />
-                  <div className="min-w-0">
-                    <h3
-                      className={`${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary`}
-                    >
-                      {degree}
-                    </h3>
-                    <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary mt-0.5`}>
-                      {institute}
-                    </p>
-                    <p className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary`}>
-                      {board}
-                    </p>
-                    {/* Year + score, set apart as a muted footnote. */}
-                    <p className={`${TYPOGRAPHY.TEXT_XS} ${TYPOGRAPHY.FONT_MEDIUM} text-accent mt-2`}>
-                      {year} · {score}
-                    </p>
-                  </div>
-                </div>
-                {/* Certificate actions pinned to the card bottom, above a divider. */}
-                <div className="mt-auto pt-3 border-t border-border">
-                  <CertActions url={url} driveUrl={driveUrl} label={degree} />
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Experience — stacked cards, newest first ── */}
-      <section className="mt-10">
-        <SectionHeading>Experience</SectionHeading>
-        <div className="flex flex-col gap-4">
-          {EXPERIENCE.map(({ id, role, org, period, logo: src, description }) => (
-            <Card key={id}>
-              <div className="flex items-start gap-4">
-                <LogoBadge src={src} alt={org} />
-                <div className="min-w-0">
-                  {/* Role + org on the left, period on the right when there's room. */}
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                    <h3
-                      className={`${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary`}
-                    >
-                      {role} — {org}
-                    </h3>
-                    <span className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary`}>
-                      {period}
-                    </span>
-                  </div>
-                  <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary mt-2 leading-relaxed`}>
-                    {description}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
-
       {/* ── Certifications — each with a View link (URL added later) ── */}
       <section className="mt-10">
         <SectionHeading>Certifications</SectionHeading>
@@ -360,6 +321,94 @@ const About = () => {
             </Card>
           ))}
         </div>
+      </section>
+
+      {/* ── Education — animated timeline, one qualification per stop ── */}
+      <section className="mt-10">
+        <SectionHeading>Education</SectionHeading>
+        <VerticalTimeline lineColor="var(--color-border)">
+          {EDUCATION.map(({ id, degree, institute, board, year, score, logo: src, url, driveUrl }) => (
+            <VerticalTimelineElement
+              key={id}
+              date={year}
+              dateClassName={`${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary`}
+              icon={<SchoolIcon />}
+              contentStyle={TIMELINE_CONTENT_STYLE}
+              contentArrowStyle={TIMELINE_ARROW_STYLE}
+              iconStyle={TIMELINE_ICON_STYLE}
+            >
+              <Card className="h-full">
+                {/* Full-height column so the actions pin to the card bottom. */}
+                <div className="flex h-full flex-col">
+                  <div className="flex items-start gap-3 mb-2">
+                    <LogoBadge src={src} alt={institute} />
+                    <div className="min-w-0">
+                      <h3
+                        className={`${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary`}
+                      >
+                        {degree}
+                      </h3>
+                      <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary mt-0.5`}>
+                        {institute}
+                      </p>
+                      <p className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary`}>
+                        {board}
+                      </p>
+                      {/* Year + score, set apart as a muted footnote. */}
+                      <p className={`${TYPOGRAPHY.TEXT_XS} ${TYPOGRAPHY.FONT_MEDIUM} text-accent mt-2`}>
+                        {year} · {score}
+                      </p>
+                    </div>
+                  </div>
+                  {/* Certificate actions pinned to the card bottom, above a divider. */}
+                  <div className="mt-auto pt-3 border-t border-border">
+                    <CertActions url={url} driveUrl={driveUrl} label={degree} />
+                  </div>
+                </div>
+              </Card>
+            </VerticalTimelineElement>
+          ))}
+        </VerticalTimeline>
+      </section>
+
+      {/* ── Experience — animated timeline, newest role first ── */}
+      <section className="mt-10">
+        <SectionHeading>Experience</SectionHeading>
+        <VerticalTimeline lineColor="var(--color-border)">
+          {EXPERIENCE.map(({ id, role, org, period, logo: src, description }) => (
+            <VerticalTimelineElement
+              key={id}
+              date={period}
+              dateClassName={`${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary`}
+              icon={<WorkIcon />}
+              contentStyle={TIMELINE_CONTENT_STYLE}
+              contentArrowStyle={TIMELINE_ARROW_STYLE}
+              iconStyle={TIMELINE_ICON_STYLE}
+            >
+              <Card>
+                <div className="flex items-start gap-4">
+                  <LogoBadge src={src} alt={org} />
+                  <div className="min-w-0">
+                    {/* Role + org on the left, period on the right when there's room. */}
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                      <h3
+                        className={`${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary`}
+                      >
+                        {role} — {org}
+                      </h3>
+                      <span className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary`}>
+                        {period}
+                      </span>
+                    </div>
+                    <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary mt-2 leading-relaxed`}>
+                      {description}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </VerticalTimelineElement>
+          ))}
+        </VerticalTimeline>
       </section>
     </PageLayout>
   );

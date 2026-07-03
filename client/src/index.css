@@ -1,3 +1,23 @@
+/* Declare layer order with vendor BETWEEN base and utilities: third-party CSS
+   must beat Tailwind's preflight reset (base zeroes every margin/padding, which
+   would break the timeline's positioning) but still lose to our utilities so
+   card content keeps its Tailwind typography/spacing. */
+@layer theme, base, vendor, components, utilities;
 @import "tailwindcss";
+/* Timeline library styles — layered so our card utilities keep control of
+   typography/spacing inside timeline content. */
+@import "react-vertical-timeline-component/style.min.css" layer(vendor);
 @import "./styles/tokens.css";
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Slim down the timeline dots on the two-column desktop layout (lib default is
+   60px). margin-left must stay -width/2 so the circle stays centered on the
+   line. Unlayered on purpose: it must beat the vendor layer. Media query
+   mirrors the library's own two-column breakpoint. */
+@media only screen and (min-width: 1170px) {
+  .vertical-timeline--two-columns .vertical-timeline-element-icon {
+    width: 48px;
+    height: 48px;
+    margin-left: -24px;
+  }
+}

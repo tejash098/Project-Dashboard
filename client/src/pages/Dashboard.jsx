@@ -145,6 +145,9 @@ const Dashboard = () => {
               // Shown in place of the heatmap when the contributions API can't
               // be reached, instead of the library's default unstyled error.
               errorMessage="Couldn`t load GitHub activity right now. Please try again later."
+              // Label only Mon/Wed/Fri on the left, mirroring GitHub's own
+              // contribution graph instead of listing all seven weekdays.
+              showWeekdayLabels={["mon", "tue", "wed", "thu", "fri", "sat", "sun"]}
               blockMargin={6}
               blockRadius={1}
             />
