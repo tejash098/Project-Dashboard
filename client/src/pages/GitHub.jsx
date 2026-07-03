@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import PageLayout from "../layouts/PageLayout";
+import FilterTabs from "../components/ui/FilterTabs";
 import RepoCard from "../components/ui/RepoCard";
 import { fetchGitHubRepos } from "../services/api/github";
+import { getLanguageCounts, NO_LANGUAGE } from "../lib/languageStats";
 import {
   GITHUB_USERNAME,
   GITHUB_PROFILE_URL,
@@ -26,10 +29,20 @@ const HEADER_LINK_CLASS = `inline-flex items-center gap-1.5 ${ROUNDED.MD} border
 
 /**
  * GitHub page — a grid of the user's public repositories fetched live from the
- * GitHub REST API. Follows the same loading / error / empty lifecycle as the
- * Projects page. Each card links out to its repo on github.com.
+ * GitHub REST API, filterable by primary language via `?lang=` so a filtered
+ * view can be deep-linked. Follows the same loading / error / empty lifecycle
+ * as the Projects page. Each card links out to its repo on github.com.
  */
 const GitHub = () => {
+  // Filter lives in the URL: read it from `?lang=`, write it on chip change.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawLang = searchParams.get("lang");
+
+  /** Update the `?lang=` query param ("all" drops it for a clean URL). */
+  const setFilter = (value) => {
+    setSearchParams(value === "all" ? {} : { lang: value }, { replace: true });
+  };
+
   // ── Fetched data lifecycle ──
   const [repos, setRepos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +66,41 @@ const GitHub = () => {
     };
     loadRepos();
   }, []);
+
+  // Counts come from the full fetched list, not the filtered view, so the
+  // chips always show accurate totals. `total` feeds the "All" chip.
+  const counts = getLanguageCounts(repos);
+
+  // Chip set: "All", then languages by frequency (ties alphabetical), then a
+  // "No language" chip only when some repo has no detected language.
+  const languages = Object.keys(counts)
+    .filter((key) => key !== "total" && key !== NO_LANGUAGE)
+    .sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
+  const langFilters = [
+    { value: "all", label: "All" },
+    ...languages.map((lang) => ({ value: lang, label: lang })),
+    ...(counts[NO_LANGUAGE]
+      ? [{ value: NO_LANGUAGE, label: "No language" }]
+      : []),
+  ];
+
+  // Unknown/stale `?lang=` values coerce to "all" at render time — never by
+  // rewriting the URL, which would clobber a valid deep link while the valid
+  // set is still empty during loading.
+  const filter =
+    rawLang && (languages.includes(rawLang) || rawLang === NO_LANGUAGE)
+      ? rawLang
+      : "all";
+
+  // Derive the visible list from state — never store it. API order is already
+  // newest-updated first, so no re-sort is needed.
+  const visibleRepos = repos.filter(
+    (repo) =>
+      filter === "all" ||
+      (filter === NO_LANGUAGE
+        ? repo.language === null
+        : repo.language === filter),
+  );
 
   return (
     <PageLayout
@@ -83,7 +131,7 @@ const GitHub = () => {
         </>
       }
     >
-      {/* ── Loading / error first, then the repo grid ── */}
+      {/* ── Loading / error first, then the language chips + repo grid ── */}
       {loading ? (
         <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary mt-6`}>
           Loading repositories…
@@ -97,11 +145,30 @@ const GitHub = () => {
           No repositories found.
         </p>
       ) : (
-        <div className={`${GRID.PROJECTS} ${SPACING.GAP_4} mt-6`}>
-          {repos.map((repo) => (
-            <RepoCard key={repo.id} repo={repo} />
-          ))}
-        </div>
+        <>
+          {/* Language filter chips — stay visible even when the current
+              filter matches nothing, so the user can switch back. */}
+          <div className="mt-6">
+            <FilterTabs
+              filter={filter}
+              onChange={setFilter}
+              filters={langFilters}
+              counts={counts}
+            />
+          </div>
+
+          {visibleRepos.length === 0 ? (
+            <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary mt-6`}>
+              No repositories found.
+            </p>
+          ) : (
+            <div className={`${GRID.PROJECTS} ${SPACING.GAP_4} mt-6`}>
+              {visibleRepos.map((repo) => (
+                <RepoCard key={repo.id} repo={repo} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </PageLayout>
   );

@@ -4,10 +4,12 @@ import { GitHubCalendar } from "react-github-calendar";
 import PageLayout from "../layouts/PageLayout";
 import Card from "../components/ui/Card";
 import FeedbackCard from "../components/ui/FeedbackCard";
+import LanguageDonutChart from "../components/ui/LanguageDonutChart";
 import { fetchProjects } from "../services/api";
 import { getFeedback } from "../services/api/feedback";
 import { getStatusCounts } from "../lib/projectStats";
 import { useAuth } from "../hooks/useAuth";
+import { useLanguageStats } from "../hooks/useLanguageStats";
 import { useTheme } from "../hooks/useTheme";
 import { FEEDBACK_STATUSES } from "../config/feedbackStatus";
 import { GITHUB_USERNAME } from "../config/github";
@@ -37,6 +39,14 @@ const Dashboard = () => {
   const [feedback, setFeedback] = useState([]);
   const [fbLoading, setFbLoading] = useState(false);
   const [fbError, setFbError] = useState(null);
+
+  // ── Language stats lifecycle (same isolation rationale — a GitHub API
+  //    failure never breaks the project stats; served from a 24h cache) ──
+  const {
+    totals: langTotals,
+    loading: langLoading,
+    error: langError,
+  } = useLanguageStats(GITHUB_USERNAME);
 
   // Fetch all projects once and reduce them to status counts.
   useEffect(() => {
@@ -152,6 +162,32 @@ const Dashboard = () => {
               blockRadius={1}
             />
           </div>
+        </Card>
+      </section>
+
+      {/* ── Languages — donut of code bytes per language across public repos ── */}
+      <section className="mt-10">
+        <h2
+          className={`${TYPOGRAPHY.TEXT_2XL} ${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary mb-4`}
+        >
+          Languages
+        </h2>
+        <Card>
+          {langLoading ? (
+            <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
+              Loading language stats…
+            </p>
+          ) : langError ? (
+            <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
+              Couldn’t load language stats: {langError}
+            </p>
+          ) : !langTotals || Object.keys(langTotals).length === 0 ? (
+            <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
+              No language data available.
+            </p>
+          ) : (
+            <LanguageDonutChart totals={langTotals} />
+          )}
         </Card>
       </section>
 

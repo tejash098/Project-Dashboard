@@ -24,6 +24,9 @@ const LANGUAGE_COLORS = {
   Kotlin: "#A97BFF",
   Swift: "#F05138",
   SCSS: "#c6538c",
+  "Jupyter Notebook": "#DA5B0B",
+  Nix: "#7e7eff",
+  Apex: "#1797c0",
 };
 
 /** Fallback color (a CSS var) used when a language has no mapped color. */
