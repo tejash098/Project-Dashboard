@@ -49,6 +49,22 @@ const config = Object.freeze({
   cloudinaryCloudName: required("CLOUDINARY_CLOUD_NAME"),
   cloudinaryApiKey: required("CLOUDINARY_API_KEY"),
   cloudinaryApiSecret: required("CLOUDINARY_API_SECRET"),
+
+  // ── GitHub (language-stats endpoint) ──
+  // Keep in sync with GITHUB_USERNAME in client/src/config/github.js — the
+  // donut chart and the repos page should describe the same account.
+  githubUsername: process.env.GITHUB_USERNAME || "tejash098",
+  githubApiBase: "https://api.github.com",
+  langStatsTtlSeconds: 86400, // how long cached language totals stay fresh (24h)
+
+  // ── Redis (optional — cache for GitHub language stats) ──
+  // Deliberately NOT required(): Redis is a cache the API degrades around.
+  // When unset/unreachable the server boots fine and every request simply
+  // behaves like a cache miss (direct GitHub fetch).
+  redisUsername: process.env.REDIS_USERNAME || "default",
+  redisPassword: process.env.REDIS_PASSWORD,
+  redisHost: process.env.REDIS_HOST,
+  redisPort: Number(process.env.REDIS_PORT) || 6379,
 });
 
 export default config;

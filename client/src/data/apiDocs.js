@@ -79,7 +79,7 @@ export const AUTH_INFO = {
  *
  * @type {Array<{
  *   id: string, method: "GET"|"POST"|"PUT"|"DELETE", path: string,
- *   description: string, auth: boolean, group: "Auth"|"Projects"|"Feedback",
+ *   description: string, auth: boolean, group: "Auth"|"Projects"|"Feedback"|"TechStack"|"GitHub",
  *   queryParams?: Array<{ name: string, type: string, description: string }>,
  *   pathParams?: Array<{ name: string, type: string, description: string }>,
  *   requestBody?: object|null, responseExample: object,
@@ -701,6 +701,35 @@ export const ENDPOINTS = [
       { code: 401, meaning: "Missing, invalid, or expired token" },
     ],
   },
+
+  // ── GitHub ────────────────────────────────────────────────────────────
+  {
+    id: "github-language-stats",
+    method: "GET",
+    path: "/api/github/language-stats",
+    description:
+      "Total bytes of code per language across the portfolio account's public " +
+      "non-fork GitHub repositories. Public — powers the Dashboard's language " +
+      "donut chart. The server aggregates GitHub's per-repo language data and " +
+      "serves it from a shared Redis cache (~24h TTL); the account is fixed " +
+      "server-side, so no username parameter is accepted.",
+    auth: false,
+    group: "GitHub",
+    responseExample: {
+      status: "success",
+      data: {
+        JavaScript: 412500,
+        "Jupyter Notebook": 3610240,
+        Python: 204800,
+        HTML: 81920,
+      },
+    },
+    statusCodes: [
+      { code: 200, meaning: "Success — totals returned (cached or fresh)" },
+      { code: 503, meaning: "GitHub API rate limit exceeded — retry later" },
+      { code: 500, meaning: "Server error" },
+    ],
+  },
 ];
 
 /**
@@ -1010,7 +1039,7 @@ export const STATUS_CODES = [
  * `group` field.
  * @type {string[]}
  */
-export const ENDPOINT_GROUPS = ["Auth", "Projects", "Feedback", "TechStack"];
+export const ENDPOINT_GROUPS = ["Auth", "Projects", "Feedback", "TechStack", "GitHub"];
 
 /**
  * Data-model tables in display order. `group` ties each model to an endpoint
@@ -1037,4 +1066,5 @@ export const DOCS_RESOURCES = [
   { value: "Projects", label: "Project" },
   { value: "Feedback", label: "Feedback" },
   { value: "TechStack", label: "Tech Stack" },
+  { value: "GitHub", label: "GitHub" },
 ];

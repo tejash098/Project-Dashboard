@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { fetchLanguageStats } from "../services/api/github";
 
 /**
- * Load a user's per-language code byte totals (cached ~24h in localStorage by
- * the service layer). Follows the app's standard fetch lifecycle so callers
- * can render the usual loading / error / empty branches.
- * @param {string} username - GitHub account whose code to measure.
+ * Load per-language code byte totals from the backend, which caches them in
+ * Redis (~24h TTL) shared by all visitors. Follows the app's standard fetch
+ * lifecycle so callers can render the usual loading / error / empty branches.
+ * @param {string} username - Kept for the effect dependency; the backend
+ *   decides the actual GitHub account (server GITHUB_USERNAME config).
  * @returns {{
  *   totals: import("../services/api/github").LanguageTotals|null,
  *   loading: boolean,

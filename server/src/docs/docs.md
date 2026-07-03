@@ -761,6 +761,36 @@ Add a tech to the catalog. Requires admin auth. Used by the picker's "add custom
 | 400 | Validation failed (missing name or bad category) |
 | 401 | Missing, invalid, or expired token |
 
+### GitHub
+
+#### GET /api/github/language-stats
+
+Total bytes of code per language across the portfolio account's public non-fork GitHub repositories. Public — powers the Dashboard's language donut chart. The server aggregates GitHub's per-repo language data and serves it from a shared Redis cache (~24h TTL); the account is fixed server-side, so no username parameter is accepted.
+
+**Auth required:** No
+
+**Response example**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "JavaScript": 412500,
+    "Jupyter Notebook": 3610240,
+    "Python": 204800,
+    "HTML": 81920
+  }
+}
+```
+
+**Status codes**
+
+| Code | Meaning |
+| --- | --- |
+| 200 | Success — totals returned (cached or fresh) |
+| 503 | GitHub API rate limit exceeded — retry later |
+| 500 | Server error |
+
 ## Data Model
 
 Fields of each resource.

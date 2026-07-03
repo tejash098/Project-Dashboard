@@ -7,6 +7,7 @@ import projectRoutes from "./routes/projectRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import techstackRoutes from "./routes/techstackRoutes.js";
+import githubRoutes from "./routes/githubRoutes.js";
 
 const app = express();
 
@@ -55,5 +56,8 @@ app.use("/api/feedback", feedbackRoutes);
 
 // Tech-stack catalog routes (powers the project tech picker)
 app.use("/api/techstacks", techstackRoutes);
+
+// GitHub-derived stats (Redis-cached language totals for the Dashboard donut)
+app.use("/api/github", githubRoutes);
 
 export default app;
