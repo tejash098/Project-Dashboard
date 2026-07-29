@@ -1,7 +1,11 @@
+import { useState } from "react";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import CheckIcon from "@mui/icons-material/Check";
 import Card from "./Card";
 import MethodBadge from "./MethodBadge";
 import CodeBlock from "./CodeBlock";
-import { ROUNDED, TYPOGRAPHY } from "../../config/constants";
+import { useToast } from "../../hooks/useToast";
+import { ICON_SIZE, ROUNDED, TRANSITION, TYPOGRAPHY, A11Y } from "../../config/constants";
 
 /** @typedef {import("../../data/apiDocs").ENDPOINTS[number]} Endpoint */
 
@@ -38,6 +42,21 @@ const EndpointCard = ({ endpoint }) => {
     statusCodes,
   } = endpoint;
 
+  const { addToast } = useToast();
+  const [copied, setCopied] = useState(false);
+
+  /** Copy the endpoint path to the clipboard and confirm with a toast. */
+  const handleCopyPath = async () => {
+    try {
+      await navigator.clipboard.writeText(path);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+      addToast({ type: "success", message: `Copied ${path}` });
+    } catch {
+      addToast({ type: "error", message: "Couldn't copy to clipboard" });
+    }
+  };
+
   return (
     <Card>
       {/* `id` makes the card an anchor target; `scroll-mt-*` keeps it clear of the top. */}
@@ -45,11 +64,35 @@ const EndpointCard = ({ endpoint }) => {
         {/* ── Header — method + path + auth indicator ── */}
         <div className="flex flex-wrap items-center gap-3">
           <MethodBadge method={method} />
-          <code
-            className={`font-mono ${TYPOGRAPHY.TEXT_SM} text-text-primary break-all`}
+          {/* Clickable path — copies to clipboard on click. */}
+          <button
+            type="button"
+            onClick={handleCopyPath}
+            title="Click to copy path"
+            aria-label={`Copy ${path} to clipboard`}
+            className={`group inline-flex items-center gap-1.5 px-2 py-0.5
+              ${ROUNDED.MD} border border-transparent
+              hover:border-border hover:bg-accent-subtle cursor-pointer
+              ${TRANSITION.COLORS} ${A11Y.FOCUS_RING}`}
           >
-            {path}
-          </code>
+            <code
+              className={`font-mono ${TYPOGRAPHY.TEXT_SM} text-text-primary break-all`}
+            >
+              {path}
+            </code>
+            {/* Copy / check icon — visible on hover or briefly after copying. */}
+            <span
+              className={`inline-flex items-center shrink-0
+                ${copied ? "text-success" : "text-text-secondary opacity-0 group-hover:opacity-100"}
+                transition-opacity duration-200`}
+            >
+              {copied ? (
+                <CheckIcon sx={{ fontSize: ICON_SIZE.SM }} />
+              ) : (
+                <ContentCopyIcon sx={{ fontSize: ICON_SIZE.SM }} />
+              )}
+            </span>
+          </button>
           {/* Auth indicator — protected endpoints get a lock; public a plain pill. */}
           <span
             className={`inline-flex items-center ${ROUNDED.FULL} px-2.5 py-0.5
