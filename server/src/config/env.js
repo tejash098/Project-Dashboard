@@ -65,6 +65,11 @@ const config = Object.freeze({
   redisPassword: process.env.REDIS_PASSWORD,
   redisHost: process.env.REDIS_HOST,
   redisPort: Number(process.env.REDIS_PORT) || 6379,
+
+  // ── Rate limiting (per-IP, Redis-backed) ──
+  // Configurable via env so production can tune without a redeploy.
+  rateLimitMax: Number(process.env.RATE_LIMIT_MAX) || 15,
+  rateLimitWindowSeconds: Number(process.env.RATE_LIMIT_WINDOW) || 60,
 });
 
 export default config;

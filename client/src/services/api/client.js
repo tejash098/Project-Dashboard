@@ -57,6 +57,16 @@ api.interceptors.response.use(
       localStorage.removeItem(AUTH_ADMIN_KEY);
       window.dispatchEvent(new Event("auth:unauthorized"));
     }
+    // Rate-limited — broadcast so ToastProvider can show the server's message
+    // without every page needing its own 429 handler.
+    if (status === 429) {
+      const message =
+        error.response?.data?.message || "Too many requests. Please slow down.";
+      console.warn(`[api] 429 → rate limited: ${message}`);
+      window.dispatchEvent(
+        new CustomEvent("api:rate-limited", { detail: { message } }),
+      );
+    }
     return Promise.reject(error);
   },
 );

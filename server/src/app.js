@@ -8,6 +8,7 @@ import authRoutes from "./routes/authRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import techstackRoutes from "./routes/techstackRoutes.js";
 import githubRoutes from "./routes/githubRoutes.js";
+import { rateLimit } from "./middleware/rateLimit.js";
 
 const app = express();
 
@@ -17,9 +18,14 @@ const app = express();
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DOCS_MARKDOWN = readFileSync(join(__dirname, "docs", "docs.md"), "utf-8");
 
+// Trust the first reverse-proxy hop so req.ip reflects the real client IP
+// (required for rate limiting behind Render / Vercel / Nginx).
+app.set("trust proxy", 1);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(rateLimit);
 
 // Request tracer — logs every incoming request (method + path + ms taken).
 // Bodies are intentionally NOT logged, since the login route carries a password.

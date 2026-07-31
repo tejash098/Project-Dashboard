@@ -85,3 +85,10 @@ export const cacheSet = async (key, value, ttlSeconds) => {
     console.warn("[redis] SET failed:", err.message);
   }
 };
+
+/**
+ * Raw Redis client — exported for operations (INCR, EXPIRE) that the
+ * cacheGet/cacheSet wrappers don't cover (e.g. rate limiting).
+ * Null when REDIS_HOST is unset.
+ */
+export { client as redisClient };

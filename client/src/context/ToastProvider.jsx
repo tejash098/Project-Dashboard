@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import Toast from "../components/ui/Toast";
 import { ToastContext } from "./ToastContext";
 
@@ -35,6 +35,19 @@ const ToastProvider = ({ children }) => {
     },
     [removeToast],
   );
+
+  // Listen for rate-limit events broadcast by the Axios response interceptor
+  // (which runs outside React). Same bridge pattern as auth:unauthorized.
+  useEffect(() => {
+    const onRateLimited = (e) => {
+      addToast({
+        type: "error",
+        message: e.detail?.message || "Too many requests. Please slow down.",
+      });
+    };
+    window.addEventListener("api:rate-limited", onRateLimited);
+    return () => window.removeEventListener("api:rate-limited", onRateLimited);
+  }, [addToast]);
 
   return (
     <ToastContext.Provider value={{ addToast }}>
