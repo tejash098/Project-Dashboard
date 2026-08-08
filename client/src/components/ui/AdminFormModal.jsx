@@ -1,6 +1,8 @@
 import { useState } from "react";
 import Modal from "./Modal";
 import { useToast } from "../../hooks/useToast";
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { createAdmin, updateAdmin } from "../../services/api";
 import { ROUNDED, TYPOGRAPHY, A11Y, WIDTH } from "../../config/constants";
 
@@ -54,6 +56,7 @@ const AdminFormModal = ({ open, mode = "create", admin = null, onClose, onSucces
   );
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   /**
    * Update a single field on input change.
@@ -173,15 +176,25 @@ const AdminFormModal = ({ open, mode = "create", admin = null, onClose, onSucces
           <span className={`${TYPOGRAPHY.TEXT_XS} ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary`}>
             Password
           </span>
-          <input
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            autoComplete="new-password"
-            className={INPUT_CLASS}
-            placeholder={isEdit ? "Leave blank to keep current" : "••••••••"}
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              autoComplete="new-password"
+              className={`${INPUT_CLASS} pr-12`}
+              placeholder={isEdit ? "Leave blank to keep current" : "••••••••"}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary flex items-center justify-center"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+            </button>
+          </div>
         </label>
 
         {/* Inline error — only after a failed submit. */}
