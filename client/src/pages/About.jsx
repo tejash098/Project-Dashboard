@@ -102,7 +102,7 @@ const EXPERIENCE = [
     id: 1,
     role: "Software Engineer Intern",
     org: "Projetly",
-    period: "Jan 2026 – July 2026",
+    period: "Jan 2026 – Aug 2026",
     logo: logo(CLOUDINARY_ASSETS.projetlyLogo),
     description:
       "Built serverless integration backends on Azure Functions with MongoDB, " +
