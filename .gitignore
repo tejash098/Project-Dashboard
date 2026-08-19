@@ -39,6 +39,7 @@ server/.env
 
 # AI & Planning
 .claude
+.agents
 CONTEXT.md
 CLAUDE.md
 GEMINI.md
