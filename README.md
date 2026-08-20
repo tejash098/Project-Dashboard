@@ -125,6 +125,4 @@ Client (client/.env)
 - If GitHub language stats appear missing or 500s, check Redis connectivity or GITHUB_USERNAME in the envs.
 - For Cloudinary uploads, ensure the API secret is only set in the server `.env` (never expose secrets in the client).
 
----
-
-If you'd like, the README can be expanded further with examples of API endpoints, sequence diagrams, or a contributor guide.  
+--- 
