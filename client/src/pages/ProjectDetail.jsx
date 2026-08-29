@@ -9,6 +9,7 @@ import BackLink from "../components/ui/BackLink";
 import StatusBadge from "../components/ui/StatusBadge";
 import EditableField from "../components/ui/EditableField";
 import TechStackPicker from "../components/ui/TechStackPicker";
+import LivePreview from "../components/ui/LivePreview";
 import Modal from "../components/ui/Modal";
 import { fetchProjectBySlug, updateProject, deleteProject } from "../services/api";
 import { formatDate } from "../lib/formatters";
@@ -245,6 +246,9 @@ const ProjectDetail = () => {
           </>
         }
       >
+        {/* ── Live preview — embeds the deployed site, or explains why it cannot ── */}
+        <LivePreview url={liveUrl} title={title} canEdit={isAdmin} />
+
         {/* ── Full description — no clamp here ── */}
         <p className={`${TYPOGRAPHY.TEXT_SM} text-text-primary`}>
           <EditableField
