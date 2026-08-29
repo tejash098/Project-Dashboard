@@ -122,7 +122,9 @@ export const APPSHELL = {
 // New group for grid
 export const GRID = {
     STATS: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-    PROJECTS: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+    // One project per row — each card pairs a wide preview with its details, so
+    // the old 3-up layout no longer leaves enough width for both columns.
+    PROJECTS: "grid grid-cols-1",
 };
 
 // New group for max width
@@ -156,6 +158,18 @@ export const A11Y = {
 
 // New group — live project preview frame (LivePreview)
 export const PREVIEW = {
-    FRAME: "aspect-video w-full overflow-hidden",
+    // Pulls the whole panel in from the page's max-w-7xl content width. Sits on
+    // the section, not the frame, so the host/Open strip and the caption stay
+    // flush with the frame's edges instead of overhanging it. The cap alone only
+    // bites past ~1425px of viewport, so the percentage keeps the inset visible
+    // on mid-size screens too — and only from `lg` up, so narrow layouts stay
+    // flush with the rest of the page content.
+    MAX_W: "max-w-6xl lg:w-[95%]",
+    // Slightly flatter than 16/9, which trims the bottom without letterboxing.
+    FRAME: "aspect-[16/8.5] w-full overflow-hidden",
+    // Card variant — a shorter tile sitting beside the details column, and never
+    // a click target: the card's stretched link must receive the click, not the
+    // embedded site.
+    CARD_FRAME: "aspect-video w-full overflow-hidden pointer-events-none",
     IFRAME: "w-full h-full border-0",
 };
