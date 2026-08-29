@@ -153,3 +153,9 @@ export const A11Y = {
     FOCUS_RING: "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none",
     MOTION_SAFE: "motion-reduce:transition-none",
 };
+
+// New group — live project preview frame (LivePreview)
+export const PREVIEW = {
+    FRAME: "aspect-video w-full overflow-hidden",
+    IFRAME: "w-full h-full border-0",
+};
