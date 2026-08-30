@@ -5,6 +5,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  refreshProjectPreview,
 } from "../controllers/projectController.js";
 import { auth } from "../middleware/auth.js";
 
