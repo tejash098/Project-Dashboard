@@ -167,9 +167,12 @@ export const PREVIEW = {
     MAX_W: "max-w-6xl lg:w-[95%]",
     // Slightly flatter than 16/9, which trims the bottom without letterboxing.
     FRAME: "aspect-[16/8.5] w-full overflow-hidden",
-    // Card variant — a shorter tile sitting beside the details column, and never
-    // a click target: the card's stretched link must receive the click, not the
-    // embedded site.
+    // Card thumbnail tile — holds the stored screenshot beside the details
+    // column, and is never a click target: the card's stretched link must
+    // receive the click.
     CARD_FRAME: "aspect-video w-full overflow-hidden pointer-events-none",
+    // The screenshot itself — cropped to fill the tile, anchored to the top of
+    // the page rather than centred.
+    THUMB_IMG: "w-full h-full object-cover object-top",
     IFRAME: "w-full h-full border-0",
 };

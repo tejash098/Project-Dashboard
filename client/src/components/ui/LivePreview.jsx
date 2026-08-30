@@ -42,11 +42,6 @@ const parseEmbeddableUrl = (url) => {
  * way a deployment platform previews a build. Nothing is stored or uploaded:
  * the project's existing `liveUrl` is the only input.
  *
- * Two shapes, one embed implementation:
- * - full (default) — the detail page panel, with a host/Open strip and a caption.
- * - `compact` — a bare tile for the left half of a ProjectCard. No chrome, no
- *   caption, and pointer-events off so the card's stretched link keeps the click.
- *
  * Whether a cross-origin frame was refused (`X-Frame-Options`, or a CSP
  * `frame-ancestors` directive) is NOT detectable from here. A refused frame and
  * a healthy cross-origin one are identical to script: both fire `load`, both
@@ -63,9 +58,8 @@ const parseEmbeddableUrl = (url) => {
  * @param {string}  [props.url]     - The project's live deployment URL.
  * @param {string}  props.title     - Project title, used for the frame's accessible name.
  * @param {boolean} [props.canEdit] - Whether the viewer is an admin (tailors the empty state).
- * @param {boolean} [props.compact] - Render the bare card tile instead of the full panel.
  */
-const LivePreview = ({ url, title, canEdit = false, compact = false }) => {
+const LivePreview = ({ url, title, canEdit = false }) => {
   const parsed = parseEmbeddableUrl(url);
   const href = parsed?.href ?? null;
 
@@ -99,34 +93,28 @@ const LivePreview = ({ url, title, canEdit = false, compact = false }) => {
     }
   }, [status, href]);
 
-  /** Aspect + sizing of the framed box, which differs between the two shapes. */
-  const frameClass = compact ? PREVIEW.CARD_FRAME : PREVIEW.FRAME;
   /** Surface styling shared by the frame and the empty-state tile. */
   const panelClass = `${ROUNDED.LG} border ${BORDER.DEFAULT} bg-page-bg`;
 
   // ── Nothing to embed — no live URL, or one we won't put in an iframe ──
   if (!parsed) {
-    const emptyTile = (
-      <div
-        className={`${frameClass} ${panelClass} flex flex-col items-center
-          justify-center gap-1 px-6 text-center`}
-      >
-        <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
-          No live deployment{compact ? "" : " to preview yet."}
-        </p>
-        {/* Admins get the next step; visitors don't need to know about it. The
-            card tile is too small for the hint, and its own detail page has it. */}
-        {canEdit && !compact && (
-          <p className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary`}>
-            Add a Live URL below and it will show up here.
+    return (
+      <section className={`mb-6 ${PREVIEW.MAX_W}`}>
+        <div
+          className={`${PREVIEW.FRAME} ${panelClass} flex flex-col items-center
+            justify-center gap-1 px-6 text-center`}
+        >
+          <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
+            No live deployment to preview yet.
           </p>
-        )}
-      </div>
-    );
-    return compact ? (
-      emptyTile
-    ) : (
-      <section className={`mb-6 ${PREVIEW.MAX_W}`}>{emptyTile}</section>
+          {/* Admins get the next step; visitors don't need to know about it. */}
+          {canEdit && (
+            <p className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary`}>
+              Add a Live URL below and it will show up here.
+            </p>
+          )}
+        </div>
+      </section>
     );
   }
 
@@ -136,26 +124,22 @@ const LivePreview = ({ url, title, canEdit = false, compact = false }) => {
 
   // ── Frame — the embedded site, or a message when it refuses to be framed ──
   const frame = (
-    <div className={`relative ${frameClass} ${panelClass}`}>
+    <div className={`relative ${PREVIEW.FRAME} ${panelClass}`}>
       {status === "blocked" ? (
         // Refused (or simply never responded) — say so and hand over the link.
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center">
           <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
             This site can’t be embedded here.
           </p>
-          {/* Omitted in a card: the whole card is already one link, and this tile
-              has pointer-events off, so a nested anchor would be unreachable. */}
-          {!compact && (
-            <a
-              href={parsed.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={openLinkClass}
-            >
-              <LaunchIcon sx={{ fontSize: ICON_SIZE.SM }} />
-              Open {parsed.host}
-            </a>
-          )}
+          <a
+            href={parsed.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={openLinkClass}
+          >
+            <LaunchIcon sx={{ fontSize: ICON_SIZE.SM }} />
+            Open {parsed.host}
+          </a>
         </div>
       ) : (
         <>
@@ -185,8 +169,6 @@ const LivePreview = ({ url, title, canEdit = false, compact = false }) => {
     </div>
   );
 
-  // ── Card variant — a bare tile; the card supplies its own title and links ──
-  if (compact) return frame;
 
   return (
     <section className={`mb-6 ${PREVIEW.MAX_W}`}>

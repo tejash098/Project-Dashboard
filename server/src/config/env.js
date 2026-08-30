@@ -45,10 +45,22 @@ const config = Object.freeze({
   // ── Projects ──
   defaultProjectLimit: 100, // default cap for GET /api/projects
 
-  // ── Cloudinary (feedback image uploads) ──
+  // ── Cloudinary (feedback image uploads + project preview screenshots) ──
   cloudinaryCloudName: required("CLOUDINARY_CLOUD_NAME"),
   cloudinaryApiKey: required("CLOUDINARY_API_KEY"),
   cloudinaryApiSecret: required("CLOUDINARY_API_SECRET"),
+
+  // ── Project preview screenshots (Microlink → Cloudinary) ──
+  // Captures run on create, on a liveUrl change, and on an explicit refresh —
+  // never per page view — so the keyless tier is comfortably enough.
+  microlinkApiBase: "https://api.microlink.io",
+  // Deliberately NOT required(): the API works without a key; setting one only
+  // raises the daily cap.
+  microlinkApiKey: process.env.MICROLINK_API_KEY,
+  // Desktop dimensions, so a framed site shows its desktop layout rather than
+  // the mobile breakpoint a narrow card would trigger.
+  previewViewport: { width: 1280, height: 800 },
+  previewFolder: "project-previews", // Cloudinary folder, mirrors "feedback"
 
   // ── GitHub (language-stats endpoint) ──
   // Keep in sync with GITHUB_USERNAME in client/src/config/github.js — the

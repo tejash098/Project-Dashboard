@@ -471,6 +471,43 @@ Delete a project by slug. Requires admin auth. Returns a confirmation message ra
 | 404 | No project with that slug |
 | 500 | Server error |
 
+#### POST /api/projects/:slug/preview
+
+Recapture the project’s preview screenshot from its `liveUrl` and store it on Cloudinary, replacing the previous image. Requires admin auth. Captures also happen automatically when a project is created with a live URL and when that URL changes, so this endpoint is for refreshing in place after a redeploy. Takes a few seconds — the response waits for the capture and upload to finish.
+
+**Auth required:** Yes
+
+**Path parameters**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| slug | string | Slug of the project to recapture. |
+
+**Response example**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "slug": "portfolio-site",
+    "title": "Portfolio Site",
+    "liveUrl": "https://example.com",
+    "imageUrl": "https://res.cloudinary.com/<cloud>/image/upload/project-previews/abc123.png",
+    "imagePublicId": "project-previews/abc123"
+  }
+}
+```
+
+**Status codes**
+
+| Code | Meaning |
+| --- | --- |
+| 200 | Captured and stored |
+| 400 | Project has no liveUrl to capture |
+| 401 | Missing, invalid, or expired token |
+| 404 | No project with that slug |
+| 502 | Screenshot service or upload failed |
+
 ### Feedback
 
 #### POST /api/feedback
@@ -824,7 +861,8 @@ Fields of each resource.
 | liveUrl | string | No | Live demo URL, if any. |
 | repoUrl | string | No | Source repository URL, if any. |
 | featured | boolean | No | Whether to highlight the project. Defaults to false. |
-| imageUrl | string | No | Thumbnail path, if any. |
+| imageUrl | string | No | Cloudinary URL of the captured preview screenshot. Set by the server, not by the client. |
+| imagePublicId | string | No | Cloudinary public_id of that screenshot, kept so it can be replaced. |
 | tags | string[] | No | Freeform category tags. Defaults to an empty array. |
 | createdAt | string (ISO) | No | Creation timestamp, managed by Mongoose. |
 | updatedAt | string (ISO) | No | Last-update timestamp, managed by Mongoose. |

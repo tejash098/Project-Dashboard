@@ -3,13 +3,13 @@ import LaunchIcon from "@mui/icons-material/Launch";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import Card from "./Card";
 import StatusBadge from "./StatusBadge";
-import LivePreview from "./LivePreview";
+import ProjectThumbnail from "./ProjectThumbnail";
 import { ICON_SIZE, ROUNDED, TYPOGRAPHY, A11Y } from "../../config/constants";
 
 /** @typedef {import("../../services/api").Project} Project */
 
 /**
- * Card summarizing a single project: a live preview of the deployment on the
+ * Card summarizing a single project: a screenshot of the deployment on the
  * left, the project's details on the right. Composes the base Card. Stacks to a
  * single column below `sm`, where a side-by-side split leaves neither half room.
  *
@@ -18,15 +18,15 @@ import { ICON_SIZE, ROUNDED, TYPOGRAPHY, A11Y } from "../../config/constants";
  * Link stretches its own hit area over the card (`after:inset-0`) while the
  * external anchors are lifted above it (`relative z-10`). That keeps exactly one
  * real anchor for the card, so keyboard, middle-click and screen readers all
- * behave without any role/tabIndex/keydown emulation. The preview tile carries
- * `pointer-events-none` (see PREVIEW.CARD_FRAME) so clicking the embedded site
- * navigates the card rather than interacting with the framed page.
+ * behave without any role/tabIndex/keydown emulation. The thumbnail carries
+ * `pointer-events-none` (see PREVIEW.CARD_FRAME) so clicking the image navigates
+ * the card and cannot start an image drag.
  *
  * @param {Object}  props
  * @param {Project} props.project - Project to render.
  */
 const ProjectCard = ({ project }) => {
-  const { slug, title, description, status, techStack, tags, liveUrl, repoUrl } =
+  const { slug, title, description, status, techStack, tags, liveUrl, repoUrl, imageUrl } =
     project;
 
   return (
@@ -34,9 +34,9 @@ const ProjectCard = ({ project }) => {
     <div className="group relative cursor-pointer">
       <Card className="group-hover:border-accent group-focus-within:border-accent">
         <div className="flex flex-col gap-5 sm:flex-row">
-          {/* ── Left — live preview of the deployment ── */}
+          {/* ── Left — stored screenshot of the deployment ── */}
           <div className="sm:w-2/5 lg:w-1/3 sm:shrink-0">
-            <LivePreview url={liveUrl} title={title} compact />
+            <ProjectThumbnail imageUrl={imageUrl} title={title} />
           </div>
 
           {/* ── Right — the project's details ── */}

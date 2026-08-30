@@ -11,7 +11,8 @@ import api from "./client";
  * @property {string}   [liveUrl]   - Live demo URL, if any.
  * @property {string}   [repoUrl]   - Source repository URL, if any.
  * @property {boolean}  featured    - Whether to highlight this project.
- * @property {string}   [imageUrl]  - Thumbnail path, if any.
+ * @property {string}   [imageUrl]  - Cloudinary URL of the captured preview screenshot, if any.
+ * @property {string}   [imagePublicId] - Cloudinary public_id of that screenshot, if any.
  * @property {string[]} tags        - Freeform category tags.
  * @property {string}   createdAt   - ISO timestamp, set by Mongoose.
  * @property {string}   updatedAt   - ISO timestamp, set by Mongoose.
@@ -73,4 +74,18 @@ export const updateProject = async (slug, data) => {
 export const deleteProject = async (slug) => {
   const res = await api.delete(`/projects/${slug}`);
   return res.data;
+};
+
+/**
+ * Recapture a project's preview screenshot from its live URL. Used after a
+ * redeploy, when the URL is unchanged but the site behind it isn't. Captures
+ * also happen automatically on create and on a liveUrl change, so this is only
+ * for refreshing in place.
+ * @param {string} slug - Slug of the project to recapture.
+ * @returns {Promise<Project>} The project with its new imageUrl.
+ * @throws {Error} On a 404, a 400 (project has no liveUrl), or a 502 (capture failed).
+ */
+export const refreshProjectPreview = async (slug) => {
+  const res = await api.post(`/projects/${slug}/preview`);
+  return res.data.data;
 };

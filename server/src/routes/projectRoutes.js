@@ -23,5 +23,6 @@ router.get("/:slug", getProjectBySlug); // public
 router.post("/", auth, createProject); // protected
 router.put("/:slug", auth, updateProject); // protected
 router.delete("/:slug", auth, deleteProject); // protected
+router.post("/:slug/preview", auth, refreshProjectPreview); // protected
 
 export default router;
