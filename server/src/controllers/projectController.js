@@ -1,6 +1,42 @@
 import Project from "../models/Project.js";
+import cloudinary from "../config/cloudinary.js";
 import config from "../config/env.js";
 import { slugify } from "../utils/slugify.js";
+import { captureProjectPreview } from "../utils/captureScreenshot.js";
+
+/**
+ * Capture a fresh preview screenshot for a project and persist it, removing the
+ * screenshot it replaces so Cloudinary doesn't accumulate orphans.
+ *
+ * Saves the document itself, so callers only need to await this. Rethrows on a
+ * capture failure — the automatic callers swallow it, the explicit endpoint
+ * reports it.
+ *
+ * @param {import("mongoose").Document} project - The project to (re)capture; must have a liveUrl.
+ * @returns {Promise<void>}
+ * @throws {Error} When the capture or upload fails.
+ */
+const applyPreview = async (project) => {
+  const previousPublicId = project.imagePublicId;
+  const { secure_url, public_id } = await captureProjectPreview(project.liveUrl);
+
+  project.imageUrl = secure_url;
+  project.imagePublicId = public_id;
+  await project.save();
+
+  if (previousPublicId) {
+    // Best-effort cleanup — the new screenshot is already saved, so a Cloudinary
+    // hiccup here must not fail the request.
+    try {
+      await cloudinary.uploader.destroy(previousPublicId);
+      console.log(`[projects] old preview removed (${previousPublicId})`);
+    } catch (cloudErr) {
+      console.warn(
+        `[projects] old preview cleanup failed (${previousPublicId}): ${cloudErr.message}`,
+      );
+    }
+  }
+};
 
 /**
  * Derive a slug from a title that doesn't collide with an existing project.
@@ -106,6 +142,18 @@ export const createProject = async (req, res) => {
     }
     const project = await Project.create(payload);
     console.log(`[projects] created "${project.slug}" (id ${project._id})`);
+
+    // Best-effort first screenshot. A screenshot service being down must never
+    // block creating a project, so a failure is logged and the 201 still stands
+    // — the admin can retry from the detail page's refresh button.
+    if (project.liveUrl) {
+      try {
+        await applyPreview(project);
+      } catch (previewErr) {
+        console.warn(`[projects] initial preview failed: ${previewErr.message}`);
+      }
+    }
+
     res.status(201).json({ status: "success", data: project });
   } catch (error) {
     // Validation failures (missing required fields, bad enum) land here.
@@ -127,19 +175,37 @@ export const updateProject = async (req, res) => {
     console.log(
       `[projects] update "${req.params.slug}": fields=[${Object.keys(req.body).join(", ")}]`,
     );
+    // Read first so the pre-update liveUrl is known: the preview is only worth
+    // recapturing when that specific field changed, so editing a title or a tag
+    // doesn't spend a screenshot.
+    const existing = await Project.findOne({ slug: req.params.slug });
+    if (!existing) {
+      console.warn(`[projects] update: slug "${req.params.slug}" not found`);
+      return res
+        .status(404)
+        .json({ status: "error", message: "Project not found" });
+    }
+    const previousLiveUrl = existing.liveUrl;
+
     // `new: true` returns the post-update doc; `runValidators` enforces schema rules on update.
     const project = await Project.findOneAndUpdate(
       { slug: req.params.slug },
       req.body,
       { new: true, runValidators: true },
     );
-    if (!project) {
-      console.warn(`[projects] update: slug "${req.params.slug}" not found`);
-      return res
-        .status(404)
-        .json({ status: "error", message: "Project not found" });
-    }
     console.log(`[projects] updated "${project.slug}"`);
+
+    // Best-effort re-capture, for the same reason as create: a screenshot
+    // service outage shouldn't turn a successful edit into an error.
+    if (project.liveUrl && project.liveUrl !== previousLiveUrl) {
+      console.log(`[projects] liveUrl changed on "${project.slug}" — recapturing preview`);
+      try {
+        await applyPreview(project);
+      } catch (previewErr) {
+        console.warn(`[projects] preview recapture failed: ${previewErr.message}`);
+      }
+    }
+
     res.status(200).json({ status: "success", data: project });
   } catch (error) {
     console.error("[projects] update error:", error.message);
@@ -164,6 +230,19 @@ export const deleteProject = async (req, res) => {
         .status(404)
         .json({ status: "error", message: "Project not found" });
     }
+    // The DB record (the primary target) is gone; remove its screenshot too.
+    // Treat a Cloudinary failure as non-fatal so the request still reports success.
+    if (project.imagePublicId) {
+      try {
+        const result = await cloudinary.uploader.destroy(project.imagePublicId);
+        console.log(`[projects] preview removed (${project.imagePublicId}): ${result?.result}`);
+      } catch (cloudErr) {
+        console.warn(
+          `[projects] preview cleanup failed (${project.imagePublicId}): ${cloudErr.message}`,
+        );
+      }
+    }
+
     console.log(`[projects] deleted "${req.params.slug}"`);
     res
       .status(200)
@@ -171,5 +250,43 @@ export const deleteProject = async (req, res) => {
   } catch (error) {
     console.error("[projects] delete error:", error.message);
     res.status(500).json({ status: "error", message: error.message });
+  }
+};
+
+/**
+ * POST /api/projects/:slug/preview  (private)
+ * Recapture the project's preview screenshot on demand — used after a redeploy,
+ * when the live URL is unchanged but the site behind it isn't.
+ *
+ * Unlike the automatic captures on create/update, this one was asked for
+ * explicitly, so a failure is reported rather than swallowed.
+ * @param {import("express").Request} req - Express request; `req.params.slug` identifies the project.
+ * @param {import("express").Response} res - Express response.
+ * @returns {Promise<void>} Responds 200 `{ status: "success", data }`, 400/404/502 `{ status: "error", message }`.
+ */
+export const refreshProjectPreview = async (req, res) => {
+  try {
+    console.log(`[projects] preview refresh requested for "${req.params.slug}"`);
+    const project = await Project.findOne({ slug: req.params.slug });
+    if (!project) {
+      console.warn(`[projects] preview: slug "${req.params.slug}" not found`);
+      return res.status(404).json({ status: "error", message: "Project not found" });
+    }
+    if (!project.liveUrl) {
+      console.warn(`[projects] preview: "${req.params.slug}" has no liveUrl`);
+      return res.status(400).json({
+        status: "error",
+        message: "Add a live URL before capturing a preview",
+      });
+    }
+
+    await applyPreview(project);
+    console.log(`[projects] preview refreshed for "${project.slug}"`);
+    res.status(200).json({ status: "success", data: project });
+  } catch (error) {
+    // 502: we're the gateway here — the screenshot service or Cloudinary failed,
+    // not the client's request.
+    console.error("[projects] preview refresh error:", error.message);
+    res.status(502).json({ status: "error", message: error.message });
   }
 };

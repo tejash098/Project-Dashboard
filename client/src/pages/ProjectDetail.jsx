@@ -4,6 +4,7 @@ import LaunchIcon from "@mui/icons-material/Launch";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import PageLayout from "../layouts/PageLayout";
 import BackLink from "../components/ui/BackLink";
 import StatusBadge from "../components/ui/StatusBadge";
@@ -11,7 +12,12 @@ import EditableField from "../components/ui/EditableField";
 import TechStackPicker from "../components/ui/TechStackPicker";
 import LivePreview from "../components/ui/LivePreview";
 import Modal from "../components/ui/Modal";
-import { fetchProjectBySlug, updateProject, deleteProject } from "../services/api";
+import {
+  fetchProjectBySlug,
+  updateProject,
+  deleteProject,
+  refreshProjectPreview,
+} from "../services/api";
 import { formatDate } from "../lib/formatters";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
@@ -51,6 +57,9 @@ const ProjectDetail = () => {
   const [techEditing, setTechEditing] = useState(false);
   const [techDraft, setTechDraft] = useState([]);
   const [techSaving, setTechSaving] = useState(false);
+
+  // ── Preview screenshot recapture ──
+  const [refreshing, setRefreshing] = useState(false);
 
   // ── Delete confirmation ──
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -133,6 +142,30 @@ const ProjectDetail = () => {
       // handleSave already toasted the error; keep the editor open for a retry.
     } finally {
       setTechSaving(false);
+    }
+  };
+
+  /**
+   * Recapture this project's preview screenshot from its live URL. The image
+   * only appears on the project list, so the toast is the confirmation here.
+   * Replaces local state with the returned doc, refreshing updatedAt too.
+   * @returns {Promise<void>}
+   */
+  const handleRefreshPreview = async () => {
+    if (refreshing) return;
+    console.log(`[ProjectDetail] recapturing preview for "${slug}"…`);
+    setRefreshing(true);
+    try {
+      const updated = await refreshProjectPreview(slug);
+      console.log(`[ProjectDetail] preview updated → ${updated.imageUrl}`);
+      setProject(updated);
+      addToast({ type: "success", message: "Preview screenshot updated" });
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || "Capture failed";
+      console.error("[ProjectDetail] preview refresh failed:", message);
+      addToast({ type: "error", message: `Couldn’t refresh preview: ${message}` });
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -229,6 +262,22 @@ const ProjectDetail = () => {
             >
               <StatusBadge status={status} />
             </EditableField>
+
+            {/* Admin-only — recapture the screenshot shown on the project list. */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={handleRefreshPreview}
+                disabled={refreshing}
+                title="Recapture the screenshot shown on the projects list"
+                className={`inline-flex items-center gap-1 ${ROUNDED.MD} border border-border
+                  px-2 py-1 ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary
+                  hover:text-accent disabled:opacity-60 ${A11Y.FOCUS_RING}`}
+              >
+                <RefreshIcon sx={{ fontSize: ICON_SIZE.SM }} />
+                {refreshing ? "Capturing…" : "Refresh preview"}
+              </button>
+            )}
 
             {/* Admin-only delete — opens a confirmation modal. */}
             {isAdmin && (

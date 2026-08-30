@@ -421,6 +421,45 @@ export const ENDPOINTS = [
       { code: 500, meaning: "Server error" },
     ],
   },
+  {
+    id: "refresh-project-preview",
+    method: "POST",
+    path: "/api/projects/:slug/preview",
+    description:
+      "Recapture the project’s preview screenshot from its `liveUrl` and store " +
+      "it on Cloudinary, replacing the previous image. Requires admin auth. " +
+      "Captures also happen automatically when a project is created with a live " +
+      "URL and when that URL changes, so this endpoint is for refreshing in " +
+      "place after a redeploy. Takes a few seconds — the response waits for the " +
+      "capture and upload to finish.",
+    auth: true,
+    group: "Projects",
+    pathParams: [
+      {
+        name: "slug",
+        type: "string",
+        description: "Slug of the project to recapture.",
+      },
+    ],
+    responseExample: {
+      status: "success",
+      data: {
+        slug: "portfolio-site",
+        title: "Portfolio Site",
+        liveUrl: "https://example.com",
+        imageUrl:
+          "https://res.cloudinary.com/<cloud>/image/upload/project-previews/abc123.png",
+        imagePublicId: "project-previews/abc123",
+      },
+    },
+    statusCodes: [
+      { code: 200, meaning: "Captured and stored" },
+      { code: 400, meaning: "Project has no liveUrl to capture" },
+      { code: 401, meaning: "Missing, invalid, or expired token" },
+      { code: 404, meaning: "No project with that slug" },
+      { code: 502, meaning: "Screenshot service or upload failed" },
+    ],
+  },
 
   // ── Feedback ──────────────────────────────────────────────────────────
   {
@@ -870,7 +909,15 @@ export const PROJECT_MODEL = [
     field: "imageUrl",
     type: "string",
     required: false,
-    notes: "Thumbnail path, if any.",
+    notes:
+      "Cloudinary URL of the captured preview screenshot. Set by the server, " +
+      "not by the client.",
+  },
+  {
+    field: "imagePublicId",
+    type: "string",
+    required: false,
+    notes: "Cloudinary public_id of that screenshot, kept so it can be replaced.",
   },
   {
     field: "tags",

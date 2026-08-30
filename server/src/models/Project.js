@@ -46,7 +46,16 @@ const projectSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Cloudinary secure URL of the generated preview screenshot of `liveUrl`.
+    // Set by the capture pipeline, not by hand — see utils/captureScreenshot.js.
     imageUrl: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    // Cloudinary public_id (e.g. "project-previews/abc123") of that screenshot —
+    // kept so the asset can be replaced or deleted later via the upload API.
+    imagePublicId: {
       type: String,
       required: false,
       trim: true,
