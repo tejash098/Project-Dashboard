@@ -28,10 +28,14 @@ export const captureProjectPreview = async (liveUrl) => {
     "viewport.height": String(height),
   });
 
+  // A paid key is only honoured by the pro host; sending it to the free one is
+  // silently ignored. Host and header therefore switch together.
+  const apiKey = config.microlinkApiKey;
+  const base = apiKey ? config.microlinkProApiBase : config.microlinkApiBase;
+
   console.log(`[preview] capturing "${liveUrl}" at ${width}x${height}…`);
-  const response = await fetch(`${config.microlinkApiBase}/?${query}`, {
-    // The key is optional — omit the header entirely when it isn't configured.
-    headers: config.microlinkApiKey ? { "x-api-key": config.microlinkApiKey } : {},
+  const response = await fetch(`${base}/?${query}`, {
+    headers: apiKey ? { "x-api-key": apiKey } : {},
   });
 
   // A non-2xx here is usually the daily quota or a target the browser couldn't

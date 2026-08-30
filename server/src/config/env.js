@@ -51,11 +51,13 @@ const config = Object.freeze({
   cloudinaryApiSecret: required("CLOUDINARY_API_SECRET"),
 
   // ── Project preview screenshots (Microlink → Cloudinary) ──
-  // Captures run on create, on a liveUrl change, and on an explicit refresh —
-  // never per page view — so the keyless tier is comfortably enough.
+  // Free, keyless host. A paid key is NOT accepted here — it is only honoured
+  // by the pro host below, so the two must be switched together.
   microlinkApiBase: "https://api.microlink.io",
-  // Deliberately NOT required(): the API works without a key; setting one only
-  // raises the daily cap.
+  microlinkProApiBase: "https://pro.microlink.io",
+  // Deliberately NOT required(): the keyless tier covers this use, since
+  // captures are per project change rather than per page view. A key only
+  // exists on Microlink's paid plan.
   microlinkApiKey: process.env.MICROLINK_API_KEY,
   // Desktop dimensions, so a framed site shows its desktop layout rather than
   // the mobile breakpoint a narrow card would trigger.
