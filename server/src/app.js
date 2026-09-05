@@ -45,6 +45,11 @@ app.get("/api/status", (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.get("/", (req, res) => {
+  console.log("[http] health check");
+  res.json({ status: "ok" });
+});
+
 // Public Markdown view of the API docs — backs the Docs page "Copy page" /
 // "View as Markdown" links and the AI hand-offs (ChatGPT/Claude/etc.).
 app.get("/api/docs.md", (req, res) => {
