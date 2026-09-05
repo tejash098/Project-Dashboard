@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# pre-push — the local test gate.
+#
+# Git runs this before any `git push`. A non-zero exit aborts the push and
+# nothing reaches the remote. This is the whole mechanism: the checks below are
+# ordinary commands, and their exit codes decide whether the push happens.
+#
+# Enable it once per clone (it is not automatic, because git only looks in
+# .git/hooks by default and that directory is not version controlled):
+#
+#     git config core.hooksPath .githooks
+#
+# To skip it deliberately:  git push --no-verify
+# That escape hatch is why CI exists as well — a hook protects your machine,
+# not the repository.
+
+# Stop at the first failing command. Without this the script would run every
+# check and then exit with the status of the LAST one, so an early failure
+# would be reported as success.
+set -e
+
+# client/ and server/ are independent npm projects with no root package.json,
+# so each suite is invoked through its own directory with `npm --prefix`.
+
+echo "→ server tests"
+npm --prefix server test
+
+echo "→ client lint"
+npm --prefix client run lint
+
+echo "→ client tests"
+npm --prefix client test
+
+echo "✓ all checks passed — pushing"
