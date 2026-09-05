@@ -133,6 +133,61 @@ cd server
 npm run seed:techstacks
 ```
 
+## Testing
+
+Both projects use [Vitest](https://vitest.dev). They are independent npm
+projects, so each suite runs from its own directory:
+
+```bash
+npm --prefix server test
+npm --prefix client test
+```
+
+`npm test` maps to `vitest run` — the one-shot form. Bare `vitest` is watch
+mode and never exits, which would hang the pre-push hook and CI.
+
+For a watch loop while developing, run it directly:
+
+```bash
+cd client
+npx vitest
+```
+
+### Enabling the pre-push hook
+
+Tests run automatically before every push, and a failure aborts the push. The
+hook lives in `.githooks/` so it is version controlled, but Git only looks in
+`.git/hooks` by default — so **every clone must opt in once**:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Without that command the hook is inert and nothing will tell you so.
+
+To skip the hook deliberately: `git push --no-verify`. That escape hatch is
+why CI exists as well — a hook protects one machine, not the repository.
+
+### CI
+
+`.github/workflows/ci.yml` runs both suites on every push and pull request,
+and `main` requires those checks to pass before a merge. CI is the gate that
+`--no-verify` cannot bypass.
+
+**Never hand-resolve a `package-lock.json` conflict.** Take either side, then
+delete `node_modules` and the lockfile and reinstall:
+
+```bash
+cd client
+rm -rf node_modules package-lock.json
+npm install
+```
+
+Patching a lockfile in place reconciles it against your machine and silently
+drops other platforms' optional dependencies — for example the Linux build of
+Rolldown that Vite needs. Everything passes locally and CI fails on Ubuntu with
+a missing native binding.
+
 ## Usage
 
 Run the backend and frontend in separate terminals.
