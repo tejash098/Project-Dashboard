@@ -1,0 +1,3 @@
+# Shell scripts must keep LF endings regardless of core.autocrlf, or the
+# shebang breaks on Linux/macOS with "bad interpreter: /bin/sh^M".
+.githooks/* text eol=lf
