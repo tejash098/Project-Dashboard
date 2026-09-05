@@ -24,7 +24,7 @@ const ToastProvider = ({ children }) => {
 
   /**
    * Queue a toast and schedule its auto-dismissal.
-   * @param {{ type?: "success"|"error", message: string }} toast - Toast to show.
+   * @param {{ type?: "success"|"error"|"info", message: string }} toast - Toast to show.
    */
   const addToast = useCallback(
     ({ type = "success", message }) => {

@@ -1,5 +1,6 @@
 import MenuIcon from "@mui/icons-material/Menu";
 import { useSidebar } from "../hooks/useSidebar";
+import { useDesktopHint } from "../hooks/useDesktopHint";
 import Sidebar from "../components/nav/Sidebar";
 import Logo from "../components/ui/Logo";
 import FeedbackWidget from "../components/ui/FeedbackWidget";
@@ -25,6 +26,11 @@ import {
  */
 const AppShell = ({ children }) => {
   const { isOpen, toggle } = useSidebar();
+
+  // Mount-time advisory: on a touch device narrower than the md breakpoint,
+  // point the visitor at their browser desktop-mode toggle. AppShell wraps
+  // every route and survives navigation, so this runs once per page load.
+  useDesktopHint();
 
   return (
     <div
