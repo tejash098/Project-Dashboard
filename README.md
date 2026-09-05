@@ -17,6 +17,7 @@ A full-stack project portfolio dashboard for publishing projects, tracking GitHu
 - Swagger UI React
 - Cloudinary React SDK
 - EmailJS
+- Vitest, Testing Library, and jsdom for tests
 
 ### Backend
 
@@ -25,12 +26,17 @@ A full-stack project portfolio dashboard for publishing projects, tracking GitHu
 - Redis for optional GitHub statistics caching
 - JWT and bcryptjs for administrator authentication
 - Cloudinary and Multer for feedback image uploads
+- Microlink for capturing project preview screenshots
 - CORS, dotenv, and Nodemon
+- Vitest, Supertest, and mongodb-memory-server for tests
 
 ## Features
 
 - Dashboard with project metrics and GitHub language statistics
 - Public project catalogue and project detail pages
+- Project cards showing a stored screenshot of each deployed site
+- Live embedded preview of a deployment on the project detail page
+- On-demand screenshot recapture for administrators
 - Admin authentication with JWT-protected management routes
 - Create, update, and delete projects
 - Technology stack catalogue and project technology picker
@@ -42,10 +48,15 @@ A full-stack project portfolio dashboard for publishing projects, tracking GitHu
 - Redis-backed GitHub statistics caching with direct-fetch fallback
 - Per-IP API rate limiting
 - Responsive interface with theme and sidebar controls
+- Desktop-mode hint for visitors on small touch screens
+- Automated test suites for both applications, enforced on push and in CI
 
 ## Prerequisites
 
-- Node.js 18 or later
+- Node.js 22.22 or later, on a release line the toolchain supports:
+  `^22.22 || ^24.15 || >=26`. Note that **Node 25 is excluded** — Vitest and
+  jsdom both declare ranges that skip it, and installing on 25 produces
+  `EBADENGINE` warnings. CI runs Node 22.
 - npm
 - MongoDB or a MongoDB Atlas cluster
 - Cloudinary account and API credentials
@@ -95,6 +106,13 @@ CLOUDINARY_API_SECRET=your-api-secret
 ```
 
 Optional settings include `ADMIN_USERNAME` and `ADMIN_PASSWORD` for bootstrap admin creation, Redis connection values, `GITHUB_USERNAME`, and rate-limit values. See `server/.env.example` for the complete list.
+
+Project preview screenshots are captured through Microlink and stored in your
+own Cloudinary account. The keyless tier is enough, because captures happen on
+create, on a live-URL change, and on an explicit refresh — never per page view.
+**Leave `MICROLINK_API_KEY` unset unless you pay for Microlink Pro:** there is no
+free API key, and setting one routes requests to the paid host, which rejects
+anything not on a plan.
 
 ### Configure the client
 
@@ -279,31 +297,37 @@ npm run seed:techstacks
 
 ```text
 project-dashboard/
+├── .githooks/            Version-controlled Git hooks (see Testing)
+├── .github/workflows/    Continuous integration
 ├── client/
-│   ├── public/              Static assets and web manifest
-│   ├── scripts/             Documentation generation scripts
+│   ├── public/           Static assets and web manifest
+│   ├── scripts/          Documentation generation scripts
+│   ├── vite.config.js    Build and test configuration
 │   └── src/
-│       ├── components/      Reusable UI and navigation components
-│       ├── config/          Client configuration and constants
-│       ├── context/         Authentication, theme, sidebar, and toast state
-│       ├── data/             Static application and API documentation data
-│       ├── hooks/            Custom React hooks
-│       ├── layouts/          Shared application layouts
-│       ├── lib/              Formatting and domain utilities
-│       ├── pages/            Route-level page components
-│       ├── services/         Backend API service modules
-│       ├── styles/           Design tokens and shared styles
-│       └── utils/            Documentation and OpenAPI helpers
+│       ├── components/   Reusable UI and navigation components
+│       ├── config/       Client configuration and constants
+│       ├── context/      Authentication, theme, sidebar, and toast state
+│       ├── data/         Static application and API documentation data
+│       ├── hooks/        Custom React hooks
+│       ├── layouts/      Shared application layouts
+│       ├── lib/          Formatting and domain utilities
+│       ├── pages/        Route-level page components
+│       ├── services/     Backend API service modules
+│       ├── styles/       Design tokens and shared styles
+│       ├── test/         Client test suite and setup
+│       └── utils/        Documentation and OpenAPI helpers
 ├── server/
+│   ├── vitest.config.js  Test environment configuration
 │   └── src/
-│       ├── config/           Environment, database, Redis, and seed setup
-│       ├── controllers/      Request handlers and business logic
-│       ├── docs/             Generated API documentation
-│       ├── middleware/       Authentication and rate limiting
-│       ├── models/           Mongoose data models
-│       ├── routes/           Express route definitions
-│       ├── scripts/          Data seeding scripts
-│       └── utils/            Server utilities
+│       ├── config/       Environment, database, Redis, and seed setup
+│       ├── controllers/  Request handlers and business logic
+│       ├── docs/         Generated API documentation
+│       ├── middleware/   Authentication and rate limiting
+│       ├── models/       Mongoose data models
+│       ├── routes/       Express route definitions
+│       ├── scripts/      Data seeding scripts
+│       ├── test/         Server test suite
+│       └── utils/        Server utilities
 └── README.md
 ```
 
@@ -311,9 +335,12 @@ project-dashboard/
 
 1. Create a focused branch for your change.
 2. Install dependencies in both `client` and `server`.
-3. Run `npm run lint` and `npm run build` from `client` before opening a pull request.
-4. Update this README when routes, scripts, configuration, or user-facing behavior changes.
-5. Never commit `.env` files, credentials, private keys, or generated secrets.
+3. Enable the pre-push hook once per clone: `git config core.hooksPath .githooks`.
+4. Add or update tests alongside the change. Both suites run automatically on
+   push, and `main` requires them to pass in CI before a merge.
+5. Update this README when routes, scripts, configuration, or user-facing behavior changes.
+6. Never commit `.env` files, credentials, private keys, or generated secrets.
+7. Never hand-resolve a `package-lock.json` conflict — see Testing for why.
 
 ## License
 
