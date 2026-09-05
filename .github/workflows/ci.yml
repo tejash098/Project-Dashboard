@@ -1,0 +1,64 @@
+# Runs both test suites on GitHub.
+#
+# This is the gate the pre-push hook cannot be: a hook lives on one machine and
+# `git push --no-verify` walks straight past it. This runs on GitHub's
+# infrastructure, on every push and pull request, and once `main` requires these
+# checks (Settings -> Branches) a red run blocks the merge outright.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  # Two jobs rather than one, so they run in parallel and a red tick names the
+  # side that broke without anyone opening the logs.
+  server:
+    name: server tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Vitest 5 declares node ^22.12.0 || ^24.0.0 || >=26.0.0 — note that
+          # excludes 25. Pinning the major keeps CI on a supported line.
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      # `npm ci`, not `npm install`: it installs strictly from the lockfile and
+      # fails loudly if the lockfile and package.json disagree, so CI can never
+      # silently test a different dependency tree than the one committed.
+      - run: npm ci
+
+      - run: npm test
+
+  client:
+    name: client lint, tests and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm test
+
+      # The build is part of the gate too: a broken import or a bad config can
+      # pass every unit test and still fail to produce a deployable bundle.
+      - run: npm run build
