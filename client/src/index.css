@@ -10,6 +10,21 @@
 @import "./styles/tokens.css";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Ambient page wash. Layered as a background-image so the shell keeps bg-page-bg
+   as its flat background-color underneath: that same token also paints form
+   inputs, code blocks and tag pills, which must stay flat. The two properties
+   compose, so the gradient lands on the shell alone. */
+.page-gradient {
+  background-image: var(--gradient-page);
+}
+
+/* Nothing else paints html/body — the page colour comes only from AppShell's root
+   div, so the overscroll/rubber-band strip falls back to the user agent's white.
+   Barely noticeable against the old warm brown; a bright flash against near-black. */
+html {
+  background-color: var(--color-page-bg);
+}
+
 /* Slim down the timeline dots on the two-column desktop layout (lib default is
    60px). margin-left must stay -width/2 so the circle stays centered on the
    line. Unlayered on purpose: it must beat the vendor layer. Media query

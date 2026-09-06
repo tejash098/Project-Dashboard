@@ -26,7 +26,7 @@ const TOAST_VARIANTS = {
   },
   error: {
     Icon: ErrorIcon,
-    className: "text-red-500",
+    className: "text-danger",
     iconProps: { sx: { fontSize: ICON_SIZE.SM } },
   },
   info: {

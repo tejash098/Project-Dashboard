@@ -116,7 +116,7 @@ const LoginModal = ({ open, onClose }) => {
 
         {/* Inline error — only when a login attempt failed. */}
         {error && (
-          <p className={`${TYPOGRAPHY.TEXT_XS} text-red-500`} role="alert">
+          <p className={`${TYPOGRAPHY.TEXT_XS} text-danger`} role="alert">
             {error}
           </p>
         )}

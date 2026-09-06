@@ -37,7 +37,7 @@ const AppShell = ({ children }) => {
     <div
       className={`
             ${FLEX.ROW} ${HEIGHT.SCREEN} ${SIZING.OVERFLOW_HIDDEN}
-            bg-page-bg ${TRANSITION.COLORS_SLOW}
+            bg-page-bg page-gradient ${TRANSITION.COLORS_SLOW}
         `}
     >
       {/* ── Backdrop — mobile only, when drawer is open ── */}
@@ -46,7 +46,7 @@ const AppShell = ({ children }) => {
           onClick={toggle}
           aria-hidden="true"
           className={`
-                        fixed inset-0 bg-black/50
+                        fixed inset-0 bg-scrim
                         ${Z_INDEX.BACKDROP} md:hidden
                         ${A11Y.MOTION_SAFE}
                     `}

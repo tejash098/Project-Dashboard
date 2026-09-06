@@ -25,8 +25,13 @@ const ApiReference = () => {
       subtitle="Interactive Swagger UI for the Project Dashboard REST API"
       actions={<BackLink to="/docs" label="Back to docs" />}
     >
-      {/* White surface keeps Swagger's light theme legible in app dark mode. */}
-      <div className={`${ROUNDED.LG} bg-white p-2 overflow-x-auto`}>
+      {/* Swagger ships its own light theme with dark text, so this panel has to
+          stay light in both modes. bg-doc-surface keeps it white in light mode and
+          dims it in dark, where a pure-white slab against the near-black page reads
+          as a blowout rather than as a document. */}
+      <div
+        className={`${ROUNDED.LG} border border-border bg-doc-surface p-2 overflow-x-auto`}
+      >
         <SwaggerUI spec={spec} docExpansion="list" />
       </div>
     </PageLayout>
