@@ -5,6 +5,9 @@
  * update a value here and every consumer follows.
  */
 
+/** Full display name — used in the About greeting and the site footer. */
+export const FULL_NAME = "Tejash Kumar Singh";
+
 /** Primary contact email. */
 export const EMAIL = "jaitej123@gmail.com";
 

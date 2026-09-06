@@ -71,6 +71,9 @@ export const HEIGHT = {
   SIDEBAR_TOGGLE: "h-16",
   ICON_BUTTON: "h-8",
   FULL: "h-full",
+  // Fills the scroll container so AppShell's footer can be pushed to the bottom
+  // of the viewport on pages too short to scroll.
+  MIN_FULL: "min-h-full",
 };
 
 // ── Layout widths ────────────────────────────────────────────

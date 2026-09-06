@@ -4,6 +4,7 @@ import { useDesktopHint } from "../hooks/useDesktopHint";
 import Sidebar from "../components/nav/Sidebar";
 import Logo from "../components/ui/Logo";
 import FeedbackWidget from "../components/ui/FeedbackWidget";
+import Footer from "../components/ui/Footer";
 import {
   TRANSITION,
   HEIGHT,
@@ -109,7 +110,16 @@ const AppShell = ({ children }) => {
         <main
           className={`${FLEX.FLEX_1} ${SIZING.OVERFLOW_Y_AUTO} ${APPSHELL.MAIN_PADDING}`}
         >
-          {children}
+          {/* Column spanning the full scroll height, with the page body taking
+             the slack. That is what makes the footer behave at both extremes:
+             on a short page it rests at the bottom of the viewport instead of
+             floating under a stub of content, and on a long one it scrolls away
+             naturally at the end. min-h-full resolves because <main> has a
+             definite height — flex-1 inside the h-screen column. */}
+          <div className={`${FLEX.ROW} ${FLEX.COL} ${HEIGHT.MIN_FULL}`}>
+            <div className={FLEX.FLEX_1}>{children}</div>
+            <Footer />
+          </div>
         </main>
       </div>
 
