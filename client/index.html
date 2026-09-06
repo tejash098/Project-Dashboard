@@ -7,9 +7,32 @@
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#c07a3a" />
+    <!-- Seeded with the light page colour; ThemeProvider rewrites it on every
+         theme change. A prefers-color-scheme pair would be wrong here: this app's
+         theme is localStorage-driven, so the OS preference and the active theme
+         can disagree. -->
+    <meta name="theme-color" content="#fdf8f3" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Project Dashboard</title>
+    <script>
+      // Applies the persisted theme before the first paint. ThemeProvider sets the
+      // class in an effect, i.e. after React mounts, so without this the page
+      // paints light and then flips — a full-screen white flash on every load for
+      // anyone using the near-black dark theme.
+      //
+      // Reads localStorage only, deliberately mirroring ThemeProvider's
+      // `localStorage.getItem("theme") || "light"` initialiser. Adding a
+      // prefers-color-scheme fallback here would make the two disagree on a first
+      // visit: this script would add .dark while provider state still said light.
+      try {
+        if (localStorage.getItem("theme") === "dark") {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {
+        // Storage can throw in private mode / with site data blocked. Falling
+        // through just means the pre-paint optimisation is skipped.
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

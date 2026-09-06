@@ -58,7 +58,7 @@ const Modal = ({ open, onClose, title, children }) => {
     // Backdrop — blurred + dimmed; clicking it closes the modal.
     <div
       className={`fixed inset-0 ${Z_INDEX.MODAL} ${FLEX.CENTER_JUSTIFY}
-        bg-black/40 backdrop-blur-sm ${SPACING.P_6}`}
+        bg-scrim backdrop-blur-sm ${SPACING.P_6}`}
       onClick={onClose}
     >
       {/* Panel — stops propagation so inside clicks don't close the modal. */}

@@ -21,6 +21,18 @@ const ThemeProvider = ({ children }) => {
     useEffect(() => {
         document.documentElement.classList.toggle("dark", theme === "dark");
         localStorage.setItem("theme", theme);
+
+        // Keep the mobile browser chrome in step with the theme. Read back from
+        // the resolved token rather than hardcoding a hex, so this can't drift
+        // from tokens.css — the class above is already applied, so the computed
+        // value is the incoming theme's page colour.
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) {
+            const pageBg = getComputedStyle(document.documentElement)
+                .getPropertyValue("--color-page-bg")
+                .trim();
+            if (pageBg) meta.setAttribute("content", pageBg);
+        }
     }, [theme]);
 
     return (

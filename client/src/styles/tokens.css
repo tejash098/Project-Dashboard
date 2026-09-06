@@ -1,11 +1,17 @@
 @theme {
   /* ─── Page background ─── */
+  /* Also paints recessed surfaces *inside* cards — form inputs, code blocks, tag
+     pills, badge fallbacks (~25 sites). It must therefore stay a flat colour: the
+     page's ambient gradient is layered separately as a background-image (see the
+     .page-gradient rule in index.css), never baked into this token. */
   --color-page-bg: #fdf8f3;
 
   /* ─── Sidebar ─── */
   --color-sidebar-bg: #f5ede2;
 
   /* ─── TopBar ─── */
+  /* Currently unused — no `bg-topbar-bg` exists in src. Kept in step with the
+     other surfaces so it is correct if something ever consumes it. */
   --color-topbar-bg: #fdf8f3;
 
   /* ─── Surface (cards, modals) ─── */
@@ -34,6 +40,18 @@
   --color-danger: #b3402f;
   --color-danger-subtle: #f7e0dc;
 
+  /* ─── Scrim (modal + drawer backdrops) ─── */
+  /* A token rather than a literal `bg-black/50`, because the required opacity is
+     theme-dependent: a half-black wash reads fine over cream but disappears over
+     the near-black dark page. */
+  --color-scrim: rgba(0, 0, 0, 0.5);
+
+  /* ─── Document surface (embedded third-party light UI) ─── */
+  /* Swagger UI ships its own light theme with dark text, so its panel has to stay
+     light in both modes. Dimmed in dark mode so it reads as a document rather
+     than a lit panel against black. */
+  --color-doc-surface: #ffffff;
+
   /* ─── Font ─── */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Fira Mono", ui-monospace, SF Mono, SF Mono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
@@ -44,20 +62,73 @@
 }
 
 /* ─── Dark mode overrides ─── */
+/*
+ * Neutral by design. The greys carry no hue at all (#0a0a0a → #171717), and every
+ * bit of warmth comes from the gradient layered over the page instead. Tinting
+ * the greys *and* the gradient is what makes a dark theme look like a dimmed
+ * light theme rather than a dark one.
+ *
+ * The accent, success, warning and danger hues are deliberately unchanged — only
+ * the neutrals move, so the brand reads the same in both themes.
+ */
 .dark {
-  --color-page-bg: #1a1008;
-  --color-sidebar-bg: #2c1a0a;
-  --color-topbar-bg: #231408;
-  --color-surface: #251608;
-  --color-border: #3d2410;
-  --color-text-primary: #e8d5b7;
-  --color-text-secondary: #a07850;
+  --color-page-bg: #0a0a0a;
+  --color-sidebar-bg: #141414;
+  --color-topbar-bg: #141414;
+  --color-surface: #171717;
+
+  /* Translucent rather than a solid grey: one value then sits correctly over both
+     the page (#0a0a0a) and a card (#171717), landing a little brighter on the
+     lighter surface. That difference is what reads as depth. */
+  --color-border: rgba(255, 255, 255, 0.1);
+
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a1a1a1;
+
+  /* The `-subtle` pairs are hover tints and badge fills that appear over both the
+     sidebar and cards, so they are low-alpha washes of their own hue for the same
+     self-adjusting reason as the border above. */
   --color-accent: #d4914a;
-  --color-accent-subtle: #2e1c0c;
+  --color-accent-subtle: rgba(212, 145, 74, 0.12);
   --color-success: #6db97f;
-  --color-success-subtle: #1b2a14;
+  --color-success-subtle: rgba(109, 185, 127, 0.12);
   --color-warning: #d9a652;
-  --color-warning-subtle: #2c2008;
+  --color-warning-subtle: rgba(217, 166, 82, 0.12);
   --color-danger: #e08a76;
-  --color-danger-subtle: #2e150f;
+  --color-danger-subtle: rgba(224, 138, 118, 0.12);
+
+  /* Heavier than the light scrim — 50% black over a near-black page is invisible,
+     which would leave the mobile drawer looking like it has no backdrop. */
+  --color-scrim: rgba(0, 0, 0, 0.72);
+
+  --color-doc-surface: #e8e8e8;
+}
+
+/*
+ * Ambient page wash, applied by `.page-gradient` in index.css.
+ *
+ * Declared here rather than inside `@theme` on purpose: `@theme` is for design
+ * tokens Tailwind generates utilities from, and there is no `bg-*` utility to
+ * generate for a gradient value.
+ *
+ * Both ramps fade fully to transparent well before mid-page, so the lower half of
+ * every screen is the flat base colour — which is what keeps long tables, code
+ * blocks and charts readable.
+ */
+:root {
+  --gradient-page: linear-gradient(
+    135deg,
+    rgba(192, 122, 58, 0.1) 0%,
+    rgba(192, 122, 58, 0.035) 28%,
+    rgba(192, 122, 58, 0) 58%
+  );
+}
+
+.dark {
+  --gradient-page: linear-gradient(
+    135deg,
+    rgba(212, 145, 74, 0.13) 0%,
+    rgba(212, 145, 74, 0.045) 30%,
+    rgba(212, 145, 74, 0) 62%
+  );
 }

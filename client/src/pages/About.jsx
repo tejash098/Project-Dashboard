@@ -18,6 +18,7 @@ import class10Cert from "../assets/CLASS10_cert.pdf";
 // Bundled résumé — downloaded by the header "Download CV" button.
 import tejashCV from "../assets/Tejash_CV.pdf";
 import { cloudinary, CLOUDINARY_ASSETS } from "../config/cloudinary";
+import { FULL_NAME } from "../config/profile";
 import {
   TYPOGRAPHY,
   ROUNDED,
@@ -36,7 +37,7 @@ const logo = (versionPath) => cloudinary(versionPath, LOGO_TX);
 const DRIVE_LOGO = cloudinary(CLOUDINARY_ASSETS.driveLogo);
 
 /** Bold first-person greeting that opens the career objective. */
-const GREETING = "Hi there, I'm Tejash Kumar Singh.";
+const GREETING = `Hi there, I'm ${FULL_NAME}.`;
 
 /** Short, punchy career objective shown at the top of the page. */
 const CAREER_OBJECTIVE =

@@ -199,7 +199,7 @@ const AdminFormModal = ({ open, mode = "create", admin = null, onClose, onSucces
 
         {/* Inline error — only after a failed submit. */}
         {error && (
-          <p className={`${TYPOGRAPHY.TEXT_XS} text-red-500`} role="alert">
+          <p className={`${TYPOGRAPHY.TEXT_XS} text-danger`} role="alert">
             {error}
           </p>
         )}

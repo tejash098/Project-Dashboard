@@ -40,12 +40,20 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/api/status", (req, res) => {
-  console.log("[http] health check");
-  res.json({ status: "ok" });
+app.get("/", (req, res) => {
+  console.log("[http] root check");
+  res.json({ status: "success", message: "Project Dashboard API server is up." });
 });
 
-app.get("/", (req, res) => {
+app.get("/api", (req, res) => {
+  console.log("[http] entry point check");
+  res.json({
+    status: "success",
+    message: "Project Dashboard API server is up.",
+  });
+});
+
+app.get("/api/status", (req, res) => {
   console.log("[http] health check");
   res.json({ status: "ok" });
 });
