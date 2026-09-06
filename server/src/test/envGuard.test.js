@@ -11,10 +11,24 @@ import { describe, it, expect } from "vitest";
  * exit code in someone's terminal.
  */
 describe("server test environment", () => {
-  it("can import a controller without the env guard exiting the process", async () => {
-    const controller = await import("../controllers/projectController.js");
+  // The generous timeout is deliberate: this test's cost is not the thing it
+  // asserts. Its body is a single dynamic import that transforms an eight-module
+  // chain (controller → Project → cloudinary → env → slugify → captureScreenshot),
+  // which is the slowest operation in the suite — ~650ms warm, and more on a cold
+  // Vite cache. Vitest's 5s default leaves too little headroom when a sibling
+  // worker is spawning mongodb-memory-server's mongod binary at the same moment;
+  // that contention alone times this out and blocks the pre-push hook with
+  // nothing actually broken. Raising the budget weakens nothing, because the
+  // assertions below — not the clock — are what catch a regression: if the env
+  // guard ever starts exiting the process, this still fails loudly.
+  it(
+    "can import a controller without the env guard exiting the process",
+    async () => {
+      const controller = await import("../controllers/projectController.js");
 
-    expect(typeof controller.getAllProjects).toBe("function");
-    expect(typeof controller.refreshProjectPreview).toBe("function");
-  });
+      expect(typeof controller.getAllProjects).toBe("function");
+      expect(typeof controller.refreshProjectPreview).toBe("function");
+    },
+    20_000,
+  );
 });
