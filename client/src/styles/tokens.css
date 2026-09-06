@@ -111,16 +111,26 @@
  * tokens Tailwind generates utilities from, and there is no `bg-*` utility to
  * generate for a gradient value.
  *
- * Both ramps fade fully to transparent well before mid-page, so the lower half of
- * every screen is the flat base colour — which is what keeps long tables, code
- * blocks and charts readable.
+ * 135deg runs the ramp from the top-left corner (0%) to the bottom-right (100%).
+ *
+ * Both ramps bloom at 0% and again at 100%, so the warmth lands in both diagonal
+ * corners rather than only the top-left, and both hold a fully transparent band
+ * across the middle — so the centre of every screen, where long tables, code
+ * blocks and charts live, sits on the flat base colour at full contrast.
  */
+/* The light ramp is a deeper brown than the accent it sits beside (160,100,46 vs
+   the accent's 192,122,58). Raising the accent's own alpha far enough to read as
+   brown made it read as a stronger peach instead; dropping the hue is what gives
+   the corners their colour without turning the whole page orange. */
 :root {
   --gradient-page: linear-gradient(
     135deg,
-    rgba(192, 122, 58, 0.1) 0%,
-    rgba(192, 122, 58, 0.035) 28%,
-    rgba(192, 122, 58, 0) 58%
+    rgba(160, 100, 46, 0.24) 0%,
+    rgba(160, 100, 46, 0.1) 22%,
+    rgba(160, 100, 46, 0) 44%,
+    rgba(160, 100, 46, 0) 56%,
+    rgba(160, 100, 46, 0.1) 78%,
+    rgba(160, 100, 46, 0.24) 100%
   );
 }
 
@@ -128,7 +138,10 @@
   --gradient-page: linear-gradient(
     135deg,
     rgba(212, 145, 74, 0.13) 0%,
-    rgba(212, 145, 74, 0.045) 30%,
-    rgba(212, 145, 74, 0) 62%
+    rgba(212, 145, 74, 0.045) 22%,
+    rgba(212, 145, 74, 0) 44%,
+    rgba(212, 145, 74, 0) 56%,
+    rgba(212, 145, 74, 0.045) 78%,
+    rgba(212, 145, 74, 0.13) 100%
   );
 }
