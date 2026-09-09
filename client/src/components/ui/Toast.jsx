@@ -5,7 +5,13 @@ import ErrorIcon from "@mui/icons-material/Error";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import { Loader2 } from "lucide-react";
-import { ICON_SIZE, ROUNDED, TYPOGRAPHY, A11Y } from "../../config/constants";
+import {
+  ICON_SIZE,
+  ROUNDED,
+  TYPOGRAPHY,
+  A11Y,
+  Z_INDEX,
+} from "../../config/constants";
 
 /**
  * Icon and colour for each toast type. A keyed lookup rather than a boolean, so
@@ -90,7 +96,11 @@ const Toast = ({ toasts, onDismiss }) => {
   if (toasts.length === 0) return null;
 
   return createPortal(
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+    // Raised clear of the chat launcher, which shares this corner. bottom-4
+    // would put the stack on top of it — and the cold-start toast is pinned
+    // open (duration: null), so it would block the launcher for the whole wait.
+    // Blocking the entrance is worse than briefly overlapping the panel.
+    <div className={`fixed bottom-24 right-4 ${Z_INDEX.MODAL} flex flex-col gap-2`}>
       {toasts.map((toast) => {
         // Fall back to success so an unrecognised type still renders an icon.
         const { Icon, className, iconProps } =

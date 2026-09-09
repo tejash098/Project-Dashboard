@@ -17,6 +17,21 @@ const required = (name) => {
 };
 
 /**
+ * Parse a comma-separated model list from the environment.
+ * @param {string|undefined} raw - e.g. "gemini-3.5-flash-lite,gemini-3.1-flash-lite".
+ * @returns {readonly string[]|null} Frozen list, or null when unset or empty, so
+ *   the caller can fall back to its own default. Frozen because
+ *   Object.freeze(config) is shallow.
+ */
+const modelList = (raw) => {
+  const models = (raw || "")
+    .split(",")
+    .map((model) => model.trim())
+    .filter(Boolean);
+  return models.length ? Object.freeze(models) : null;
+};
+
+/**
  * Single source of truth for configuration — both env-derived values and
  * hardcoded tunables. Frozen so nothing can mutate config at runtime. This
  * module is the only place that loads dotenv; importing it anywhere guarantees
@@ -91,11 +106,29 @@ const config = Object.freeze({
   // friendly 503. Same stance as Redis and Microlink above.
   geminiApiKey: process.env.GEMINI_API_KEY?.trim(),
   geminiApiBase: "https://generativelanguage.googleapis.com/v1beta",
-  // CONFIRM this id in Google AI Studio before the first run — a wrong one
-  // returns 404, which reaches the visitor as a generic "unavailable" 503. The
-  // model must also support structured output (responseSchema), which the
-  // follow-up questions depend on.
-  geminiModel: process.env.GEMINI_MODEL || "gemini-3.5-flash",
+  // Models are tried in order until one answers. This is a quota strategy as
+  // much as a resilience one: on the free tier each model carries its OWN
+  // allowance, so two models is two budgets rather than one. It also covers the
+  // 503 "high demand" a single busy model returns intermittently.
+  //
+  // Both are lite-tier, which is where the highest request-per-minute limits
+  // are (15 and 10 RPM, against 5 for the standard flash models). Ordered
+  // fastest-first from latency measured against this ~7.7KB prompt:
+  //   gemini-3.5-flash-lite  ~1.5s
+  //   gemini-3.1-flash-lite  ~6.5s
+  //
+  // Two ids that look plausible but are NOT usable here:
+  //   gemini-2.5-flash-lite  404s with "no longer available to new users",
+  //                          despite still appearing in the models list and the
+  //                          quota dashboard. Google points at 3.5-flash-lite.
+  //   gemini-3.5-flash       works, but takes 15-19s and returns 503 "high
+  //                          demand" often enough to be unusable as a primary.
+  //
+  // Override with a comma-separated GEMINI_MODELS. Every id must support
+  // structured output (responseSchema), which the follow-ups depend on.
+  geminiModels:
+    modelList(process.env.GEMINI_MODELS) ??
+    Object.freeze(["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]),
 
   // Public origin of this API, used to cite the reference document's URL inside
   // the system prompt. Set it in production; the default suits local dev.
@@ -113,7 +146,9 @@ const config = Object.freeze({
   // The server has no timeouts anywhere else; this exists because an LLM call
   // can hang indefinitely. Kept well inside the client's 90s axios timeout, so
   // the server always answers before the browser gives up.
-  chatAttemptTimeoutMs: Number(process.env.CHAT_TIMEOUT_MS) || 12_000,
+  chatAttemptTimeoutMs: Number(process.env.CHAT_TIMEOUT_MS) || 15_000,
+  // Caps the whole cascade, so two slow attempts cannot stack unbounded.
+  chatTotalTimeoutMs: Number(process.env.CHAT_TOTAL_TIMEOUT_MS) || 30_000,
 
   // ── Chat rate limiting (layered on top of the global limiter above) ──
   // Fixed here rather than read from .env: these are a safety budget on a

@@ -11,3 +11,4 @@ export * from "./project";
 export * from "./auth";
 export * from "./feedback";
 export * from "./techstack";
+export * from "./chat";

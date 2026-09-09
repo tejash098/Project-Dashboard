@@ -159,6 +159,33 @@ export const A11Y = {
     MOTION_SAFE: "motion-reduce:transition-none",
 };
 
+// New group — floating chat assistant (ChatWidget)
+export const CHAT = {
+    // Hard server limit — POST /api/chat rejects anything longer with a 400.
+    // Mirrors `chatMaxMessageChars` in server/src/config/env.js.
+    MAX_MESSAGE_CHARS: 500,
+    // Show the character counter only once the cap is close enough to matter;
+    // a counter sitting at 3/500 is noise.
+    COUNTER_THRESHOLD: 50,
+    // Six turns each way — mirrors the server's `chatMaxHistoryTurns`, so the
+    // request carries what the server would have kept anyway rather than
+    // paying to send turns it is about to drop.
+    MAX_HISTORY_MESSAGES: 12,
+    // Circular launcher pinned bottom-right. 56px clears the 44px touch-target
+    // floor. The z-index is composed at the call site, like DRAWER.BASE.
+    FAB: "fixed bottom-4 right-4 h-14 w-14",
+    // Opens upward from the launcher, leaving a gap above it. The width cap
+    // keeps it on screen at 320px; the height cap keeps it off the top edge of
+    // a short viewport.
+    PANEL: "fixed bottom-24 right-4 flex flex-col w-96 max-w-[calc(100vw-2rem)] h-[28rem] max-h-[calc(100vh-7rem)]",
+    // The only scrolling region — the header, pills and composer stay pinned so
+    // the input never walks off the bottom of a long conversation.
+    TRANSCRIPT: "flex-1 overflow-y-auto",
+    // Shared bubble geometry. pre-wrap because Shift+Enter newlines and the
+    // model's own line breaks both have to survive.
+    BUBBLE: "max-w-[85%] px-3 py-2 whitespace-pre-wrap break-words",
+};
+
 // New group — live project preview frame (LivePreview)
 export const PREVIEW = {
     // Pulls the whole panel in from the page's max-w-7xl content width. Sits on

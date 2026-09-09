@@ -4,6 +4,7 @@ import { useDesktopHint } from "../hooks/useDesktopHint";
 import Sidebar from "../components/nav/Sidebar";
 import Logo from "../components/ui/Logo";
 import FeedbackWidget from "../components/ui/FeedbackWidget";
+import ChatWidget from "../components/ui/ChatWidget";
 import Footer from "../components/ui/Footer";
 import {
   TRANSITION,
@@ -125,6 +126,11 @@ const AppShell = ({ children }) => {
 
       {/* ── Global feedback tab — fixed to the right edge on every page ── */}
       <FeedbackWidget />
+
+      {/* ── Global chat assistant — launcher pinned bottom-right on every page.
+         Mounted after the feedback tab so an open panel paints over its
+         pull-tab; both sit on z-40. ── */}
+      <ChatWidget />
     </div>
   );
 };

@@ -9,15 +9,17 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 const { mockConfig, mockGenerate, FAILURE } = vi.hoisted(() => ({
   mockConfig: {
     geminiApiKey: "test-key",
+    geminiModels: ["model-a", "model-b"],
     chatMaxHistoryTurns: 3,
     chatMaxHistoryChars: 50,
     chatFollowUpCount: 2,
     chatAttemptTimeoutMs: 5_000,
+    chatTotalTimeoutMs: 20_000,
   },
   mockGenerate: vi.fn(),
   FAILURE: {
-    RETRYABLE_KEY: "retryable-key",
-    PROVIDER_DOWN: "provider-down",
+    KEY_INVALID: "key-invalid",
+    MODEL_UNAVAILABLE: "model-unavailable",
     REQUEST_INVALID: "request-invalid",
   },
 }));
@@ -49,10 +51,11 @@ const answer = (overrides = {}) => ({
 describe("generateReply", () => {
   beforeEach(() => {
     mockConfig.geminiApiKey = "test-key";
+    mockConfig.geminiModels = ["model-a", "model-b"];
     mockGenerate.mockReset();
   });
 
-  it("passes the key, prompt and question to the provider", async () => {
+  it("answers from the first model without touching the rest", async () => {
     mockGenerate.mockResolvedValue(answer());
 
     const result = await generateReply({ message: "What is his stack?" });
@@ -61,6 +64,7 @@ describe("generateReply", () => {
     expect(mockGenerate).toHaveBeenCalledTimes(1);
     const call = mockGenerate.mock.calls[0][0];
     expect(call.apiKey).toBe("test-key");
+    expect(call.model).toBe("model-a");
     expect(call.system).toBe("SYSTEM PROMPT TEXT");
     expect(call.signal).toBeInstanceOf(AbortSignal);
   });
@@ -76,27 +80,74 @@ describe("generateReply", () => {
   });
 
   it.each([
-    ["a throttled key", FAILURE.RETRYABLE_KEY, 429],
-    ["a rejected key", FAILURE.RETRYABLE_KEY, 401],
-    ["the provider being down", FAILURE.PROVIDER_DOWN, 503],
-  ])("reports %s as all-failed", async (_label, kind, status) => {
-    // All of these look identical to the visitor — a 503 — but the kind is
-    // logged so the cause stays diagnosable from the server side.
-    mockGenerate.mockRejectedValue(providerFailure(kind, status));
+    ["out of quota", 429],
+    ["overloaded", 503],
+    ["a retired model id", 404],
+  ])("falls through to the next model when the first is %s", async (_l, status) => {
+    // The point of the cascade: each model carries its own per-minute and
+    // per-day allowance, so the second one is a fresh budget rather than a
+    // retry of an exhausted one.
+    mockGenerate
+      .mockRejectedValueOnce(providerFailure(FAILURE.MODEL_UNAVAILABLE, status))
+      .mockResolvedValueOnce(answer());
+
+    const result = await generateReply({ message: "hi" });
+
+    expect(result.reply).toBe(answer().reply);
+    expect(mockGenerate.mock.calls.map((call) => call[0].model)).toEqual([
+      "model-a",
+      "model-b",
+    ]);
+  });
+
+  it("reports all-failed only once every model is exhausted", async () => {
+    mockGenerate.mockRejectedValue(
+      providerFailure(FAILURE.MODEL_UNAVAILABLE, 429),
+    );
 
     await expect(generateReply({ message: "hi" })).rejects.toMatchObject({
       code: "all-failed",
     });
+    expect(mockGenerate).toHaveBeenCalledTimes(2);
   });
 
-  it("separates a malformed payload from an unavailable provider", async () => {
+  it("stops on a bad key instead of trying every model with it", async () => {
+    // One key serves every model, so continuing would spend a call per
+    // remaining model to prove the same thing.
+    mockGenerate.mockRejectedValue(providerFailure(FAILURE.KEY_INVALID, 401));
+
+    await expect(generateReply({ message: "hi" })).rejects.toMatchObject({
+      code: "all-failed",
+    });
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it("separates a malformed payload from an unavailable model", async () => {
     // This is our bug, not the vendor's, so the controller turns it into a 400
-    // rather than telling the visitor to try again later.
+    // rather than telling the visitor to try again later — and it would fail
+    // identically on every model, so the cascade stops.
     mockGenerate.mockRejectedValue(providerFailure(FAILURE.REQUEST_INVALID, 400));
 
     await expect(generateReply({ message: "hi" })).rejects.toMatchObject({
       code: "request-invalid",
     });
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it("walks every configured model, not just two", async () => {
+    mockConfig.geminiModels = ["model-a", "model-b", "model-c"];
+    mockGenerate
+      .mockRejectedValueOnce(providerFailure(FAILURE.MODEL_UNAVAILABLE, 429))
+      .mockRejectedValueOnce(providerFailure(FAILURE.MODEL_UNAVAILABLE, 503))
+      .mockResolvedValueOnce(answer());
+
+    await generateReply({ message: "hi" });
+
+    expect(mockGenerate.mock.calls.map((call) => call[0].model)).toEqual([
+      "model-a",
+      "model-b",
+      "model-c",
+    ]);
   });
 
   it.each([
