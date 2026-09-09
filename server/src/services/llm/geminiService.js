@@ -11,9 +11,14 @@ import { RESPONSE_SCHEMA } from "./systemPrompt.js";
  * responses correctly is the part that is easy to get wrong later.
  */
 export const FAILURE = Object.freeze({
-  RETRYABLE_KEY: "retryable-key", // this key is throttled or rejected
-  PROVIDER_DOWN: "provider-down", // vendor-wide or network fault
-  REQUEST_INVALID: "request-invalid", // our payload is malformed
+  // One key serves every model, so a key problem cannot be routed around —
+  // trying the next model would just spend another call proving it.
+  KEY_INVALID: "key-invalid",
+  // This model is out of quota, overloaded, retired, or slow. Another model has
+  // its own separate allowance, so the cascade moves on.
+  MODEL_UNAVAILABLE: "model-unavailable",
+  // Our payload is malformed. Identical on every model, so stop.
+  REQUEST_INVALID: "request-invalid",
 });
 
 /** Longest upstream message fragment echoed into an error, in characters. */
@@ -68,18 +73,19 @@ const parseJson = (text) => {
  * @param {string} raw - Raw response body.
  * @returns {string} One of {@link FAILURE}.
  */
-const classifyStatus = (status, raw) => {
-  if (status === 429) return FAILURE.RETRYABLE_KEY;
+const classifyStatus = (status, raw, model) => {
+  // Per-model quota: RPM, TPM or the daily RPD. The next model has its own.
+  if (status === 429) return FAILURE.MODEL_UNAVAILABLE;
 
   if (status === 401 || status === 403) {
-    console.warn(`[chat] gemini rejected the key with ${status} — check its value`);
-    return FAILURE.RETRYABLE_KEY;
+    console.error(`[chat] gemini rejected the key with ${status} — check its value`);
+    return FAILURE.KEY_INVALID;
   }
 
   // Gemini's bad-key response is a 400 carrying an API_KEY_INVALID reason.
   if (status === 400 && /API_KEY_INVALID|API key not valid/i.test(raw)) {
-    console.warn("[chat] gemini reported an invalid key as 400 — check its value");
-    return FAILURE.RETRYABLE_KEY;
+    console.error("[chat] gemini reported an invalid key as 400 — check its value");
+    return FAILURE.KEY_INVALID;
   }
 
   // Anything else in the 4xx band that means "your request is wrong" — our bug,
@@ -88,22 +94,27 @@ const classifyStatus = (status, raw) => {
     return FAILURE.REQUEST_INVALID;
   }
 
+  // A retired or misspelled id. Worth a loud log — but the next model in the
+  // cascade may well be fine, which is exactly how a deprecated id degrades
+  // instead of taking the endpoint down.
   if (status === 404) {
     console.error(
-      `[chat] gemini returned 404 for model "${config.geminiModel}" — confirm the id in AI Studio`,
+      `[chat] gemini returned 404 for model "${model}" — retired or misspelled id`,
     );
   }
-  return FAILURE.PROVIDER_DOWN;
+  return FAILURE.MODEL_UNAVAILABLE;
 };
 
 /**
  * Ask Gemini one question with one API key.
  *
  * Deliberately owns neither a timeout nor a retry, and never reads
- * `config.geminiApiKey` — llmManager hands it the key and the signal. That is
- * what will let Claude and OpenAI drop in behind the same signature.
+ * `config.geminiApiKey` or the model list — llmManager hands it the key, the
+ * model and the signal. That is what lets the manager walk a model cascade, and
+ * what would let Claude or OpenAI drop in behind the same signature.
  * @param {Object} params
  * @param {string} params.apiKey - The API key to authenticate with.
+ * @param {string} params.model - Which Gemini model to ask; llmManager picks it.
  * @param {string} params.system - Stable system-prompt prefix.
  * @param {Array<{ role: "user"|"assistant", content: string }>} params.messages
  *   Neutral turns, guaranteed by the caller to start with a user turn.
@@ -111,8 +122,8 @@ const classifyStatus = (status, raw) => {
  * @returns {Promise<{ reply: string, followUps: string[] }>} The parsed answer.
  * @throws {Error & { provider: string, status?: number, kind: string }}
  */
-export const generateWithGemini = async ({ apiKey, system, messages, signal }) => {
-  const url = `${config.geminiApiBase}/models/${config.geminiModel}:generateContent`;
+export const generateWithGemini = async ({ apiKey, model, system, messages, signal }) => {
+  const url = `${config.geminiApiBase}/models/${model}:generateContent`;
 
   // Gemini names the assistant role "model". Getting this wrong is the single
   // most common bug in this integration — it 400s on any multi-turn request.
@@ -146,7 +157,7 @@ export const generateWithGemini = async ({ apiKey, system, messages, signal }) =
     // The signal firing (AbortError/TimeoutError) or a DNS/TLS/connect failure
     // (TypeError). None of these are key-specific, so another key cannot help.
     throw providerError(`Gemini request failed: ${err.name}`, {
-      kind: FAILURE.PROVIDER_DOWN,
+      kind: FAILURE.MODEL_UNAVAILABLE,
       apiKey,
     });
   }
@@ -155,7 +166,7 @@ export const generateWithGemini = async ({ apiKey, system, messages, signal }) =
     const body = parseJson(raw);
     const detail = String(body?.error?.message ?? raw).slice(0, MESSAGE_SNIPPET_MAX);
     throw providerError(`Gemini responded ${res.status}: ${detail}`, {
-      kind: classifyStatus(res.status, raw),
+      kind: classifyStatus(res.status, raw, model),
       status: res.status,
       apiKey,
     });
@@ -164,7 +175,7 @@ export const generateWithGemini = async ({ apiKey, system, messages, signal }) =
   const body = parseJson(raw);
   if (!body) {
     throw providerError("Gemini returned a non-JSON body", {
-      kind: FAILURE.PROVIDER_DOWN,
+      kind: FAILURE.MODEL_UNAVAILABLE,
       status: res.status,
       apiKey,
     });
@@ -175,14 +186,14 @@ export const generateWithGemini = async ({ apiKey, system, messages, signal }) =
   if (body.promptFeedback?.blockReason) {
     throw providerError(
       `Gemini blocked the prompt (${body.promptFeedback.blockReason})`,
-      { kind: FAILURE.PROVIDER_DOWN, apiKey },
+      { kind: FAILURE.MODEL_UNAVAILABLE, apiKey },
     );
   }
 
   const candidate = body.candidates?.[0];
   if (!candidate) {
     throw providerError("Gemini returned no candidates", {
-      kind: FAILURE.PROVIDER_DOWN,
+      kind: FAILURE.MODEL_UNAVAILABLE,
       apiKey,
     });
   }
@@ -191,7 +202,7 @@ export const generateWithGemini = async ({ apiKey, system, messages, signal }) =
   // MAX_TOKENS in particular means chatMaxOutputTokens needs raising.
   if (candidate.finishReason && candidate.finishReason !== "STOP") {
     throw providerError(`Gemini stopped early (${candidate.finishReason})`, {
-      kind: FAILURE.PROVIDER_DOWN,
+      kind: FAILURE.MODEL_UNAVAILABLE,
       apiKey,
     });
   }
@@ -204,7 +215,7 @@ export const generateWithGemini = async ({ apiKey, system, messages, signal }) =
   const payload = parseJson(text);
   if (!payload || typeof payload.reply !== "string") {
     throw providerError("Gemini returned a reply that did not match the schema", {
-      kind: FAILURE.PROVIDER_DOWN,
+      kind: FAILURE.MODEL_UNAVAILABLE,
       apiKey,
     });
   }

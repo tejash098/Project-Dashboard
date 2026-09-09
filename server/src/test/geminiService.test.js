@@ -9,7 +9,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 const { mockConfig, mockSchema } = vi.hoisted(() => ({
   mockConfig: {
     geminiApiBase: "https://gemini.example.test/v1beta",
-    geminiModel: "gemini-test-model",
     chatTemperature: 0.3,
     chatMaxOutputTokens: 600,
   },
@@ -52,6 +51,7 @@ const errorResponse = (status, message, extra = "") => ({
 const callGemini = (overrides = {}) =>
   generateWithGemini({
     apiKey: "test-key",
+    model: "gemini-test-model",
     system: "SYSTEM PROMPT TEXT",
     messages: [{ role: "user", content: "hello" }],
     signal: undefined,
@@ -137,26 +137,39 @@ describe("generateWithGemini", () => {
     });
   });
 
-  it("treats a 429 as a retryable key", async () => {
+  it("treats a 429 as this model being out of quota", async () => {
+    // RPM, TPM or the daily RPD. The next model has its own allowance, which is
+    // the whole reason the cascade exists.
     fetchSpy.mockResolvedValue(errorResponse(429, "Quota exceeded"));
 
     await expect(callGemini()).rejects.toMatchObject({
-      kind: FAILURE.RETRYABLE_KEY,
+      kind: FAILURE.MODEL_UNAVAILABLE,
       status: 429,
       provider: "gemini",
     });
   });
 
-  it("treats a 400 API_KEY_INVALID as a retryable key, not a bad request", async () => {
+  it("treats a 400 API_KEY_INVALID as a key fault, not a bad request", async () => {
     // Gemini reports a revoked key as 400 rather than 401. Without this special
-    // case one stale key would abort the whole request instead of rotating.
+    // case a dead key would reach the visitor as a 400 blaming their question.
     fetchSpy.mockResolvedValue(
       errorResponse(400, "API key not valid. Please pass a valid API key.", "API_KEY_INVALID"),
     );
 
     await expect(callGemini()).rejects.toMatchObject({
-      kind: FAILURE.RETRYABLE_KEY,
+      kind: FAILURE.KEY_INVALID,
       status: 400,
+    });
+  });
+
+  it.each([[401], [403]])("treats a %i as a fatal key fault", async (status) => {
+    // One key serves every model, so this must stop the cascade rather than
+    // spend a call per remaining model proving the same thing.
+    fetchSpy.mockResolvedValue(errorResponse(status, "Unauthenticated"));
+
+    await expect(callGemini()).rejects.toMatchObject({
+      kind: FAILURE.KEY_INVALID,
+      status,
     });
   });
 
@@ -171,12 +184,14 @@ describe("generateWithGemini", () => {
     });
   });
 
-  it("treats a 404 as the provider being down", async () => {
-    // Almost always a wrong model id. Rotating keys cannot fix it.
+  it("treats a 404 as this model being unavailable", async () => {
+    // A retired or misspelled id. Classifying it as model-level rather than
+    // fatal is what lets a deprecated model fall through to the next one
+    // instead of taking the endpoint down.
     fetchSpy.mockResolvedValue(errorResponse(404, "models/x is not found"));
 
     await expect(callGemini()).rejects.toMatchObject({
-      kind: FAILURE.PROVIDER_DOWN,
+      kind: FAILURE.MODEL_UNAVAILABLE,
       status: 404,
     });
   });
@@ -196,7 +211,7 @@ describe("generateWithGemini", () => {
         ],
       },
     ],
-  ])("reports %s as the provider being down", async (_label, body) => {
+  ])("reports %s as this model being unavailable", async (_label, body) => {
     // All four arrive as HTTP 200, so a bare status check would let them
     // through as successful answers.
     fetchSpy.mockResolvedValue({
@@ -206,18 +221,19 @@ describe("generateWithGemini", () => {
     });
 
     await expect(callGemini()).rejects.toMatchObject({
-      kind: FAILURE.PROVIDER_DOWN,
+      kind: FAILURE.MODEL_UNAVAILABLE,
     });
   });
 
-  it("reports an aborted request as the provider being down", async () => {
-    // A timeout is not key-specific, so another key would only burn the budget.
+  it("reports an aborted request as this model being unavailable", async () => {
+    // A slow model is worth abandoning for a faster one, which is exactly what
+    // the cascade does next.
     const abort = new Error("The operation was aborted");
     abort.name = "TimeoutError";
     fetchSpy.mockRejectedValue(abort);
 
     await expect(callGemini()).rejects.toMatchObject({
-      kind: FAILURE.PROVIDER_DOWN,
+      kind: FAILURE.MODEL_UNAVAILABLE,
     });
   });
 

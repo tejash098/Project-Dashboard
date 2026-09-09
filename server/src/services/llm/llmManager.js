@@ -11,6 +11,12 @@ import {
  * "Sorry, out of reference." still normalize. Bounded at four words so a real
  * answer that happens to mention the phrase later is not swallowed.
  */
+/**
+ * Below this much remaining time an attempt is not worth starting: it would
+ * almost certainly abort mid-flight and spend a model's daily quota for nothing.
+ */
+const MIN_ATTEMPT_BUDGET_MS = 2_000;
+
 const OUT_OF_REFERENCE_PATTERN = /^(?:\w+\s+){0,4}out of reference/;
 
 /**
@@ -100,13 +106,16 @@ const normalizeResult = ({ reply, followUps }) => {
 };
 
 /**
- * Answer one question with the configured Gemini key.
+ * Answer one question, walking the configured Gemini models in order.
+ *
+ * The cascade is a quota strategy first and a resilience one second: on the free
+ * tier each model has its own per-minute and per-day allowance, so falling
+ * through to the next model buys a fresh budget rather than retrying an
+ * exhausted one. It also absorbs the 503 "high demand" a busy model returns.
  *
  * Owns the request's time budget — this is the only place in the server that
- * sets a timeout on outbound work. It is also the seam a provider cascade would
- * slot into later: geminiService already classifies its failures finely enough
- * (see its FAILURE kinds) to drive key rotation or a fallback vendor, even
- * though a single key only needs two outcomes today.
+ * sets a timeout on outbound work. Each attempt gets at most
+ * chatAttemptTimeoutMs, and the walk stops once chatTotalTimeoutMs is spent.
  * @param {Object} params
  * @param {string} params.message - The visitor's question, already validated.
  * @param {unknown} [params.history] - Replayed turns; sanitized here.
@@ -114,9 +123,10 @@ const normalizeResult = ({ reply, followUps }) => {
  * @throws {Error & { code: "no-keys"|"all-failed"|"request-invalid" }}
  */
 export const generateReply = async ({ message, history }) => {
-  // Read per call rather than at module load, so tests can vary it between
+  // Read per call rather than at module load, so tests can vary these between
   // cases the way captureScreenshot.test.js varies microlinkApiKey.
   const apiKey = config.geminiApiKey;
+  const models = config.geminiModels;
 
   if (!apiKey) {
     const error = new Error("No Gemini API key is configured");
@@ -126,33 +136,56 @@ export const generateReply = async ({ message, history }) => {
 
   const messages = normalizeMessages(history, message);
   const startedAt = Date.now();
+  const deadline = startedAt + config.chatTotalTimeoutMs;
 
-  try {
-    const result = await generateWithGemini({
-      apiKey,
-      system: SYSTEM_PROMPT,
-      messages,
-      signal: AbortSignal.timeout(config.chatAttemptTimeoutMs),
-    });
+  for (const [index, model] of models.entries()) {
+    const label = `${model} (${index + 1}/${models.length})`;
+    const budget = Math.min(config.chatAttemptTimeoutMs, deadline - Date.now());
 
-    console.log(`[chat] answered by gemini in ${Date.now() - startedAt}ms`);
-    return normalizeResult(result);
-  } catch (error) {
-    // A malformed payload is our bug, not the vendor's, and the controller
-    // turns it into a 400 rather than a "try again later".
-    if (error.kind === FAILURE.REQUEST_INVALID) {
-      const invalid = new Error(error.message);
-      invalid.code = "request-invalid";
-      throw invalid;
+    if (budget < MIN_ATTEMPT_BUDGET_MS) {
+      console.warn("[chat] time budget exhausted — stopping the model cascade");
+      break;
     }
 
-    // Everything else — throttled, rejected key, vendor down, timeout — is the
-    // same outcome for the visitor. The kind is logged so it stays diagnosable.
-    console.warn(
-      `[chat] gemini failed (${error.kind ?? "unknown"}, ${error.status ?? "no status"}): ${error.message}`,
-    );
-    const failed = new Error(error.message);
-    failed.code = "all-failed";
-    throw failed;
+    try {
+      const result = await generateWithGemini({
+        apiKey,
+        model,
+        system: SYSTEM_PROMPT,
+        messages,
+        signal: AbortSignal.timeout(budget),
+      });
+
+      console.log(`[chat] answered by ${label} in ${Date.now() - startedAt}ms`);
+      return normalizeResult(result);
+    } catch (error) {
+      // A malformed payload is our bug, not the vendor's, and fails identically
+      // on every model. The controller turns this into a 400.
+      if (error.kind === FAILURE.REQUEST_INVALID) {
+        const invalid = new Error(error.message);
+        invalid.code = "request-invalid";
+        throw invalid;
+      }
+
+      // One key serves every model, so a rejected key leaves nothing to try.
+      // Stopping here saves a pointless call per remaining model.
+      if (error.kind === FAILURE.KEY_INVALID) {
+        const badKey = new Error(error.message);
+        badKey.code = "all-failed";
+        throw badKey;
+      }
+
+      // Out of quota, overloaded, retired, or too slow — the next model has its
+      // own allowance. Logged per model so the cause stays diagnosable.
+      console.warn(
+        `[chat] ${label} unavailable (${error.status ?? "no status"}): ${error.message}`,
+      );
+    }
   }
+
+  const failed = new Error(
+    `All ${models.length} configured Gemini model(s) failed`,
+  );
+  failed.code = "all-failed";
+  throw failed;
 };
