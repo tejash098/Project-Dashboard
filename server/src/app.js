@@ -8,6 +8,8 @@ import authRoutes from "./routes/authRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import techstackRoutes from "./routes/techstackRoutes.js";
 import githubRoutes from "./routes/githubRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
+import { CHATBOT_CONTEXT } from "./services/llm/knowledgeBase.js";
 import { rateLimit } from "./middleware/rateLimit.js";
 
 const app = express();
@@ -64,6 +66,14 @@ app.get("/api/docs.md", (req, res) => {
   res.type("text/markdown").send(DOCS_MARKDOWN);
 });
 
+// The chatbot's reference document — the only source the assistant may answer
+// from. Hand-written (unlike docs.md, which is generated), read once at startup
+// by knowledgeBase.js, and served publicly so the system prompt can cite a real
+// URL and visitors can read exactly what the model was given.
+app.get("/api/chatbot-context.md", (req, res) => {
+  res.type("text/markdown").send(CHATBOT_CONTEXT);
+});
+
 // Auth routes (login → JWT)
 app.use("/api/auth", authRoutes);
 
@@ -78,5 +88,9 @@ app.use("/api/techstacks", techstackRoutes);
 
 // GitHub-derived stats (Redis-cached language totals for the Dashboard donut)
 app.use("/api/github", githubRoutes);
+
+// Portfolio assistant — grounded Q&A over the reference document above.
+// Rate limited far more tightly than the rest of the API (see chatRoutes.js).
+app.use("/api/chat", chatRoutes);
 
 export default app;

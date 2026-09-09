@@ -84,6 +84,46 @@ const config = Object.freeze({
   // Configurable via env so production can tune without a redeploy.
   rateLimitMax: Number(process.env.RATE_LIMIT_MAX) || 15,
   rateLimitWindowSeconds: Number(process.env.RATE_LIMIT_WINDOW) || 60,
+
+  // ── Chatbot (optional — POST /api/chat, grounded in docs/chatbot-context.md) ──
+  // Deliberately NOT required(): with no key the server boots normally, the
+  // reference Markdown is still served, and only POST /api/chat degrades to a
+  // friendly 503. Same stance as Redis and Microlink above.
+  geminiApiKey: process.env.GEMINI_API_KEY?.trim(),
+  geminiApiBase: "https://generativelanguage.googleapis.com/v1beta",
+  // CONFIRM this id in Google AI Studio before the first run — a wrong one
+  // returns 404, which reaches the visitor as a generic "unavailable" 503. The
+  // model must also support structured output (responseSchema), which the
+  // follow-up questions depend on.
+  geminiModel: process.env.GEMINI_MODEL || "gemini-3.5-flash",
+
+  // Public origin of this API, used to cite the reference document's URL inside
+  // the system prompt. Set it in production; the default suits local dev.
+  publicBaseUrl: process.env.PUBLIC_BASE_URL || "http://localhost:5000",
+
+  // ── Chat generation + request shaping ──
+  chatMaxOutputTokens: 600,
+  chatTemperature: 0.3, // low — this is recall over a fixed document, not writing
+  chatMaxMessageChars: 500,
+  chatMaxHistoryTurns: 6, // 12 messages; older turns are dropped
+  chatMaxHistoryChars: 1000, // per replayed message
+  chatFollowUpCount: 2, // follow-up questions returned with every answer
+
+  // ── Chat timeout ──
+  // The server has no timeouts anywhere else; this exists because an LLM call
+  // can hang indefinitely. Kept well inside the client's 90s axios timeout, so
+  // the server always answers before the browser gives up.
+  chatAttemptTimeoutMs: Number(process.env.CHAT_TIMEOUT_MS) || 12_000,
+
+  // ── Chat rate limiting (layered on top of the global limiter above) ──
+  // Fixed here rather than read from .env: these are a safety budget on a
+  // public endpoint that spends money, not a per-deployment tuning knob.
+  // chatBurstMax must stay <= rateLimitMax, or the global bucket binds first
+  // and this tighter one never takes effect.
+  chatBurstMax: 5, // CHAT_RATE_LIMIT_MAX
+  chatBurstWindowSeconds: 60, // CHAT_RATE_LIMIT_WINDOW
+  chatHourlyMax: 10, // CHAT_HOURLY_MAX
+  chatHourlyWindowSeconds: 3600,
 });
 
 export default config;
