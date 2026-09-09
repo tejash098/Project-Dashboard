@@ -769,6 +769,50 @@ export const ENDPOINTS = [
       { code: 500, meaning: "Server error" },
     ],
   },
+
+  // ── Chat ──────────────────────────────────────────────────────────────
+  {
+    id: "chat-message",
+    method: "POST",
+    path: "/api/chat",
+    description:
+      "Ask the portfolio assistant a question about Tejash Kumar Singh or this " +
+      "dashboard. Public and stateless — nothing is stored, so the client " +
+      "replays earlier turns as `history` and older turns are dropped " +
+      "server-side. The assistant answers only from a reference document " +
+      "published at GET /api/chatbot-context.md; anything that document does " +
+      'not cover comes back as the exact reply "Out of reference." Every ' +
+      "answer also carries two follow-up questions, each answerable from the " +
+      "same document. Rate limited to 5 requests / 60s and 10 / hour per IP — " +
+      "tighter than the global budget, because each call costs an LLM request.",
+    auth: false,
+    group: "Chat",
+    requestBody: {
+      message: "What is Tejash's tech stack?",
+      history: [
+        { role: "user", content: "Who built this dashboard?" },
+        { role: "assistant", content: "Tejash Kumar Singh built it." },
+      ],
+    },
+    responseExample: {
+      status: "success",
+      data: {
+        reply:
+          "Tejash works across the MERN stack — React on the front end, Express and MongoDB on the API — plus Azure Functions for serverless integrations.",
+        followUps: [
+          "Where has he worked?",
+          "What is this dashboard built with?",
+        ],
+      },
+    },
+    statusCodes: [
+      { code: 200, meaning: "Success — the assistant's reply and follow-ups" },
+      { code: 400, meaning: "Missing message, wrong type, or over the 500-character cap" },
+      { code: 429, meaning: "Rate limit exceeded — 5 req/60s or 10 req/hour per IP" },
+      { code: 503, meaning: "The assistant is unavailable — no provider could answer" },
+      { code: 500, meaning: "Server error" },
+    ],
+  },
 ];
 
 /**
@@ -1086,7 +1130,7 @@ export const STATUS_CODES = [
  * `group` field.
  * @type {string[]}
  */
-export const ENDPOINT_GROUPS = ["Auth", "Projects", "Feedback", "TechStack", "GitHub"];
+export const ENDPOINT_GROUPS = ["Auth", "Projects", "Feedback", "TechStack", "GitHub", "Chat"];
 
 /**
  * Data-model tables in display order. `group` ties each model to an endpoint
@@ -1114,4 +1158,5 @@ export const DOCS_RESOURCES = [
   { value: "Feedback", label: "Feedback" },
   { value: "TechStack", label: "Tech Stack" },
   { value: "GitHub", label: "GitHub" },
+  { value: "Chat", label: "Chat" },
 ];

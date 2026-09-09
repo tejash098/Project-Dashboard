@@ -45,6 +45,7 @@ A full-stack project portfolio dashboard for publishing projects, tracking GitHu
 - Protected feedback reporting and status management
 - Interactive Swagger API reference
 - Markdown API documentation endpoint
+- Chatbot API answering questions about the developer and this project, grounded in a published reference document
 - Redis-backed GitHub statistics caching with direct-fetch fallback
 - Per-IP API rate limiting
 - Responsive interface with theme and sidebar controls
@@ -105,7 +106,7 @@ CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 ```
 
-Optional settings include `ADMIN_USERNAME` and `ADMIN_PASSWORD` for bootstrap admin creation, Redis connection values, `GITHUB_USERNAME`, and rate-limit values. See `server/.env.example` for the complete list.
+Optional settings include `ADMIN_USERNAME` and `ADMIN_PASSWORD` for bootstrap admin creation, Redis connection values, `GITHUB_USERNAME`, rate-limit values, and the chatbot's `GEMINI_API_KEY` plus its model and timeout settings. The chat rate limits are fixed in `server/src/config/env.js` rather than the environment. See `server/.env.example` for the complete list.
 
 Project preview screenshots are captured through Microlink and stored in your
 own Cloudinary account. The keyless tier is enough, because captures happen on
@@ -321,11 +322,12 @@ project-dashboard/
 │   └── src/
 │       ├── config/       Environment, database, Redis, and seed setup
 │       ├── controllers/  Request handlers and business logic
-│       ├── docs/         Generated API documentation
+│       ├── docs/         Generated API docs and the chatbot reference document
 │       ├── middleware/   Authentication and rate limiting
 │       ├── models/       Mongoose data models
 │       ├── routes/       Express route definitions
 │       ├── scripts/      Data seeding scripts
+│       ├── services/     Chatbot LLM provider and prompt services
 │       ├── test/         Server test suite
 │       └── utils/        Server utilities
 └── README.md
