@@ -32,7 +32,7 @@ A full-stack project portfolio dashboard for publishing projects, tracking GitHu
 
 ## Features
 
-- Landing page with a hero, live GitHub stat tiles (contributions, repositories) and static career numbers, a contribution calendar, and language statistics (notebooks excluded, method printed under the chart)
+- Landing page with a hero, live GitHub stat tiles (contributions, repositories) and static career numbers, a contribution calendar, language statistics (notebooks excluded, method printed under the chart), and the most recently updated projects
 - Public project catalogue and project detail pages
 - Project cards showing a stored screenshot of each deployed site
 - Live embedded preview of a deployment on the project detail page
@@ -232,7 +232,7 @@ The Vite development server is normally available at `http://localhost:5173`.
 
 | Path              | Description                                                  |
 | ----------------- | ------------------------------------------------------------ |
-| `/`               | Home — hero, GitHub stat tiles, activity calendar, languages |
+| `/`               | Home — hero, GitHub stat tiles, activity calendar, languages, recent projects |
 | `/about`          | About page                                                   |
 | `/projects`       | Public project catalogue                                     |
 | `/projects/:slug` | Project details                                              |

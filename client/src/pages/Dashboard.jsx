@@ -7,6 +7,8 @@ import Card from "../components/ui/Card";
 import DownloadCvButton from "../components/ui/DownloadCvButton";
 import FeedbackCard from "../components/ui/FeedbackCard";
 import LanguageDonutChart from "../components/ui/LanguageDonutChart";
+import ProjectCard from "../components/ui/ProjectCard";
+import { fetchProjects } from "../services/api";
 import { getFeedback } from "../services/api/feedback";
 import { useAuth } from "../hooks/useAuth";
 import { useGitHubStats } from "../hooks/useGitHubStats";
@@ -27,6 +29,13 @@ import {
 
 /** How many feedback items to pull for the dashboard overview. */
 const FEEDBACK_LIMIT = 100;
+
+/**
+ * How many projects the landing page shows. Cards are full-width with a
+ * screenshot each, so three is a taste of the work without turning the home
+ * page into the catalogue — "View all" covers the rest.
+ */
+const FEATURED_PROJECT_LIMIT = 3;
 
 /**
  * Anchor id of the GitHub Activity section — the contributions tile jumps
@@ -77,11 +86,11 @@ const StatTile = ({ value, label, sublabel, to, href }) => {
 
 /**
  * Landing page — a hero (name, pitch, View work / Download CV) followed by
- * four stat tiles, the GitHub contribution calendar, and the language donut.
- * The two GitHub numbers are fetched live and fall back to a dated snapshot;
- * the career numbers are static config. Admins additionally see recent
- * feedback grouped by status; the feedback list API is admin-only, so it's
- * neither fetched nor shown to visitors.
+ * four stat tiles, the GitHub contribution calendar, the language donut, and
+ * the most recently updated projects. The two GitHub numbers are fetched live
+ * and fall back to a dated snapshot; the career numbers are static config.
+ * Admins additionally see recent feedback grouped by status; the feedback
+ * list API is admin-only, so it's neither fetched nor shown to visitors.
  */
 const Dashboard = () => {
   const { isAdmin } = useAuth();
@@ -104,6 +113,39 @@ const Dashboard = () => {
     loading: langLoading,
     error: langError,
   } = useLanguageStats(GITHUB_USERNAME);
+
+  // ── Featured projects lifecycle (public; isolated like the others) ──
+  const [projects, setProjects] = useState([]);
+  const [projLoading, setProjLoading] = useState(true);
+  const [projError, setProjError] = useState(null);
+
+  // Load the project list once on mount. The full list is fetched (the API
+  // has no limit param) and trimmed below — the same call the Projects page
+  // makes, so the two pages can never disagree about what exists.
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      console.log("[Dashboard] fetching projects for the featured section…");
+      try {
+        const list = await fetchProjects();
+        console.log(`[Dashboard] loaded ${list.length} projects`);
+        if (!ignore) setProjects(list);
+      } catch (err) {
+        console.error("[Dashboard] projects load failed:", err.message);
+        if (!ignore) setProjError(err.response?.data?.message || err.message);
+      } finally {
+        if (!ignore) setProjLoading(false);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  // Newest first, capped. Spread before sorting so state is never mutated.
+  const featuredProjects = [...projects]
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+    .slice(0, FEATURED_PROJECT_LIMIT);
 
   // Fetch feedback only for admins. Skipping the call for visitors avoids a 401
   // → auto-logout (the endpoint requires a token).
@@ -255,6 +297,45 @@ const Dashboard = () => {
             <LanguageDonutChart totals={langTotals} />
           )}
         </Card>
+      </section>
+
+      {/* ── Projects — the most recently updated few, linking to the catalogue ── */}
+      <section className="mt-10">
+        <div className="flex items-center justify-between mb-4">
+          <h2
+            className={`${TYPOGRAPHY.TEXT_2XL} ${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary`}
+          >
+            Projects
+          </h2>
+          <Link
+            to="/projects"
+            className={`${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM}
+              text-accent hover:underline`}
+          >
+            View all
+          </Link>
+        </div>
+
+        {projLoading ? (
+          <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
+            Loading projects…
+          </p>
+        ) : projError ? (
+          <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
+            Couldn’t load projects: {projError}
+          </p>
+        ) : featuredProjects.length === 0 ? (
+          <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
+            No projects yet.
+          </p>
+        ) : (
+          // Same full-width card as the catalogue — screenshot beside details.
+          <div className={`${GRID.PROJECTS} ${SPACING.GAP_4}`}>
+            {featuredProjects.map((project) => (
+              <ProjectCard key={project.slug} project={project} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ── Feedback (admin-only) — cards grouped by status ── */}
