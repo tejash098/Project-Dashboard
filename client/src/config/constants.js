@@ -124,7 +124,9 @@ export const APPSHELL = {
 
 // New group for grid
 export const GRID = {
-    STATS: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+    // Four landing-page stat tiles — 2×2 on phones and tablets, one row from
+    // `lg` so the numbers read as a single strip under the hero.
+    STATS: "grid grid-cols-2 lg:grid-cols-4",
     // One project per row — each card pairs a wide preview with its details, so
     // the old 3-up layout no longer leaves enough width for both columns.
     PROJECTS: "grid grid-cols-1",
@@ -205,4 +207,16 @@ export const PREVIEW = {
     // the page rather than centred.
     THUMB_IMG: "w-full h-full object-cover object-top",
     IFRAME: "w-full h-full border-0",
+};
+
+// New group — landing hero (Dashboard)
+export const HERO = {
+    // The one page-level headline in the app, so it deliberately outsizes every
+    // TYPOGRAPHY token. Responsive variants can't be composed from those
+    // single-size tokens, hence a dedicated group; `sm:` keeps the name on one
+    // line on phones without shrinking it on desktop.
+    TITLE: "text-3xl sm:text-4xl font-bold tracking-tight",
+    // One-line pitch under the name — capped width so it wraps at a readable
+    // measure instead of stretching across the 7xl container.
+    TAGLINE: "text-base sm:text-lg leading-relaxed max-w-2xl",
 };

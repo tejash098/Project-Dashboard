@@ -236,6 +236,8 @@ const ProjectDetail = () => {
       </div>
 
       <PageLayout
+        // The heading is JSX, so the tab title needs the plain string.
+        documentTitle={title}
         title={
           // Editable title — renders the plain heading text for visitors.
           <EditableField

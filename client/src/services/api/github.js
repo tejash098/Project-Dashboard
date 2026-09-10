@@ -1,14 +1,16 @@
 import axios from "axios";
 import api from "./client";
+import { GITHUB_CONTRIBUTIONS_API_URL } from "../../config/github";
 
 /**
  * GitHub data service.
  *
- * `fetchGitHubRepos` intentionally uses a bare `axios` call rather than the
- * shared `client.js` instance: that client injects a Bearer token and
- * redirects to login on 401 against our own backend, neither of which applies
- * to GitHub's public API (~60 requests/hour per IP — ample for one repo-list
- * fetch per page load).
+ * `fetchGitHubRepos` and `fetchContributionTotal` intentionally use bare
+ * `axios` calls rather than the shared `client.js` instance: that client
+ * injects a Bearer token and redirects to login on 401 against our own backend,
+ * neither of which applies to third-party public APIs. GitHub allows ~60
+ * unauthenticated requests/hour per visitor IP — ample for the one repo-list
+ * fetch the Dashboard and the GitHub page each make per load.
  *
  * `fetchLanguageStats`, by contrast, DOES go through the shared client: the
  * heavy per-repo GitHub fan-out lives on our server behind
@@ -42,6 +44,26 @@ export const fetchGitHubRepos = async (username) => {
   });
   // Drop forks — the page is a portfolio of original work.
   return res.data.filter((repo) => !repo.fork);
+};
+
+/**
+ * Fetch the account's total GitHub contributions over the last 12 months.
+ * Reads the same third-party API `react-github-calendar` renders the heatmap
+ * from, so the Dashboard tile and the calendar footer always agree.
+ * @param {string} username - GitHub account to look up.
+ * @returns {Promise<number>} Contribution count for the trailing year.
+ * @throws {Error} When the payload lacks a numeric total — callers treat any
+ *   rejection as "unavailable" and fall back to a static snapshot.
+ */
+export const fetchContributionTotal = async (username) => {
+  const res = await axios.get(`${GITHUB_CONTRIBUTIONS_API_URL}/${username}`, {
+    params: { y: "last" },
+  });
+  const total = res.data?.total?.lastYear;
+  if (typeof total !== "number") {
+    throw new Error("Unexpected contributions payload");
+  }
+  return total;
 };
 
 /**

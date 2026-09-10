@@ -32,7 +32,7 @@ A full-stack project portfolio dashboard for publishing projects, tracking GitHu
 
 ## Features
 
-- Dashboard with project metrics and GitHub language statistics
+- Landing page with a hero, live GitHub stat tiles (contributions, repositories) and static career numbers, a contribution calendar, and language statistics (notebooks excluded, method printed under the chart)
 - Public project catalogue and project detail pages
 - Project cards showing a stored screenshot of each deployed site
 - Live embedded preview of a deployment on the project detail page
@@ -49,6 +49,7 @@ A full-stack project portfolio dashboard for publishing projects, tracking GitHu
 - Redis-backed GitHub statistics caching with direct-fetch fallback
 - Per-IP API rate limiting
 - Responsive interface with theme and sidebar controls
+- Per-page browser tab titles
 - Desktop-mode hint for visitors on small touch screens
 - Automated test suites for both applications, enforced on push and in CI
 
@@ -229,18 +230,18 @@ The Vite development server is normally available at `http://localhost:5173`.
 
 ### Application routes
 
-| Path              | Description                               |
-| ----------------- | ----------------------------------------- |
-| `/`               | Dashboard overview                        |
-| `/about`          | About page                                |
-| `/projects`       | Public project catalogue                  |
-| `/projects/:slug` | Project details                           |
-| `/github`         | GitHub profile and repository information |
-| `/docs`           | API documentation                         |
-| `/docs/swagger`   | Interactive Swagger UI                    |
-| `/contact`        | Contact and feedback form                 |
-| `/projects/new`   | Protected project creation form           |
-| `/report`         | Protected feedback report                 |
+| Path              | Description                                                  |
+| ----------------- | ------------------------------------------------------------ |
+| `/`               | Home — hero, GitHub stat tiles, activity calendar, languages |
+| `/about`          | About page                                                   |
+| `/projects`       | Public project catalogue                                     |
+| `/projects/:slug` | Project details                                              |
+| `/github`         | GitHub profile and repository information                    |
+| `/docs`           | API documentation                                            |
+| `/docs/swagger`   | Interactive Swagger UI                                       |
+| `/contact`        | Contact and feedback form                                    |
+| `/projects/new`   | Protected project creation form                              |
+| `/report`         | Protected feedback report                                    |
 
 ### API examples
 
