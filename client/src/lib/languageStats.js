@@ -6,6 +6,23 @@
 /** Label for the folded "everything else" donut slice. */
 export const OTHER_LABEL = "Other";
 
+/**
+ * Languages dropped from the donut before percentages are computed.
+ *
+ * GitHub's per-repo language API reports bytes on disk, and a Jupyter
+ * notebook is a JSON file that stores every cell's output — rendered tables,
+ * base64-encoded plots — alongside the code. Two notebook repos accounted for
+ * ~75% of all bytes here, so the byte count was measuring data, not code.
+ */
+export const EXCLUDED_LANGUAGES = ["Jupyter Notebook"];
+
+/**
+ * Human-readable description of how the donut is weighted, printed under the
+ * chart. Keep in step with {@link EXCLUDED_LANGUAGES} — the caption is the
+ * only place the reader learns the exclusion happened.
+ */
+export const LANGUAGE_METHOD_LABEL = "by bytes of code, notebooks excluded";
+
 /** Sentinel filter value for repos whose `language` is null. */
 export const NO_LANGUAGE = "none";
 
@@ -19,13 +36,19 @@ export const NO_LANGUAGE = "none";
 /**
  * Shape language byte totals into donut slices: the biggest languages keep
  * their own slice, the long tail folds into "Other" (always last). A donut
- * stops being readable past ~6 segments, hence the cap.
+ * stops being readable past ~6 segments, hence the cap. Languages in
+ * {@link EXCLUDED_LANGUAGES} are dropped first, so every percentage is a share
+ * of the bytes that remain.
  * @param {import("../services/api/github").LanguageTotals} totals - Bytes per language.
  * @param {number} [maxSlices=6] - Maximum slices including "Other".
  * @returns {DonutSlice[]} Slices sorted largest-first, "Other" last; empty for no data.
  */
 export const buildDonutData = (totals, maxSlices = 6) => {
-  const entries = Object.entries(totals || {}).sort((a, b) => b[1] - a[1]);
+  const entries = Object.entries(totals || {})
+    // Exclude before totalling — the grand total must not include the bytes
+    // the chart deliberately leaves out.
+    .filter(([name]) => !EXCLUDED_LANGUAGES.includes(name))
+    .sort((a, b) => b[1] - a[1]);
   const grandTotal = entries.reduce((sum, [, bytes]) => sum + bytes, 0);
   if (grandTotal === 0) return [];
 

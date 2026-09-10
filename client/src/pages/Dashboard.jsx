@@ -1,73 +1,148 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import { GitHubCalendar } from "react-github-calendar";
 import PageLayout from "../layouts/PageLayout";
 import Card from "../components/ui/Card";
+import DownloadCvButton from "../components/ui/DownloadCvButton";
 import FeedbackCard from "../components/ui/FeedbackCard";
 import LanguageDonutChart from "../components/ui/LanguageDonutChart";
 import { fetchProjects } from "../services/api";
 import { getFeedback } from "../services/api/feedback";
 import { getStatusCounts } from "../lib/projectStats";
 import { useAuth } from "../hooks/useAuth";
+import { useGitHubStats } from "../hooks/useGitHubStats";
 import { useLanguageStats } from "../hooks/useLanguageStats";
 import { useTheme } from "../hooks/useTheme";
 import { FEEDBACK_STATUSES } from "../config/feedbackStatus";
-import { GITHUB_USERNAME } from "../config/github";
-import { GRID, SPACING, TYPOGRAPHY } from "../config/constants";
+import { GITHUB_STATS_FALLBACK, GITHUB_USERNAME } from "../config/github";
+import { FULL_NAME, INTEGRATIONS, INTERNSHIPS, TAGLINE } from "../config/profile";
+import {
+  A11Y,
+  GRID,
+  HERO,
+  ICON_SIZE,
+  ROUNDED,
+  SPACING,
+  TYPOGRAPHY,
+} from "../config/constants";
 
 /** How many feedback items to pull for the dashboard overview. */
 const FEEDBACK_LIMIT = 100;
 
 /**
- * Dashboard page — overview of projects and activity.
- * Project stat values are derived live from the fetched project list. Admins
- * additionally see recent feedback grouped by status; the feedback list API is
- * admin-only, so it's neither fetched nor shown to visitors.
+ * Anchor id of the GitHub Activity section — the contributions tile jumps
+ * here so the headline number lands on the heatmap that backs it up.
+ */
+const ACTIVITY_SECTION_ID = "github-activity";
+
+/**
+ * One landing-page stat tile: a headline number, what it counts, and a
+ * sub-label that makes the claim verifiable at a glance. Every tile links to
+ * its evidence — `href` for an in-page anchor, `to` for a route.
+ *
+ * Module-scope so React sees one stable component type across renders (the
+ * `react-hooks/static-components` rule), matching About's local helpers.
+ * @param {Object} props
+ * @param {number} props.value - The headline number.
+ * @param {string} props.label - What the number counts.
+ * @param {string} props.sublabel - Where the number comes from.
+ * @param {string} [props.to] - Router path the tile links to.
+ * @param {string} [props.href] - In-page `#anchor` the tile links to. Must be
+ *   a native anchor: a router `Link` to a hash only pushes history and never
+ *   scrolls the overflow `<main>` — fragment navigation does.
+ */
+const StatTile = ({ value, label, sublabel, to, href }) => {
+  const card = (
+    <Card className="h-full hover:border-accent">
+      <p
+        className={`${TYPOGRAPHY.TEXT_2XL} ${TYPOGRAPHY.FONT_BOLD} text-text-primary tabular-nums`}
+      >
+        {value}
+      </p>
+      <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>{label}</p>
+      <p className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary ${SPACING.MT_1}`}>
+        {sublabel}
+      </p>
+    </Card>
+  );
+  return href ? (
+    <a href={href} className="block">
+      {card}
+    </a>
+  ) : (
+    <Link to={to} className="block">
+      {card}
+    </Link>
+  );
+};
+
+/**
+ * Landing page — a hero (name, pitch, View work / Download CV) followed by
+ * four stat tiles, the GitHub contribution calendar, the language donut, and
+ * project status counts (total / active / completed) that deep-link into the
+ * filtered catalogue. The two GitHub numbers are fetched live and fall back
+ * to a dated snapshot; the career numbers are static config.
+ * Admins additionally see recent feedback grouped by status; the feedback
+ * list API is admin-only, so it's neither fetched nor shown to visitors.
  */
 const Dashboard = () => {
   const { isAdmin } = useAuth();
   // Drives the contribution calendar's color scheme so it tracks the app theme.
   const { theme } = useTheme();
 
-  // ── Project stats lifecycle ──
-  const [counts, setCounts] = useState({ total: 0, active: 0, completed: 0 });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // ── Live GitHub numbers for the stat tiles (null until loaded / on failure) ──
+  const { contributions, repoCount } = useGitHubStats(GITHUB_USERNAME);
 
   // ── Feedback lifecycle (admin-only; kept separate so a failure here never
-  //    breaks the project stats above) ──
+  //    breaks the rest of the page) ──
   const [feedback, setFeedback] = useState([]);
   const [fbLoading, setFbLoading] = useState(false);
   const [fbError, setFbError] = useState(null);
 
   // ── Language stats lifecycle (same isolation rationale — a GitHub API
-  //    failure never breaks the project stats; served from a 24h cache) ──
+  //    failure never breaks the tiles; served from a 24h cache) ──
   const {
     totals: langTotals,
     loading: langLoading,
     error: langError,
   } = useLanguageStats(GITHUB_USERNAME);
 
-  // Fetch all projects once and reduce them to status counts.
+  // ── Project status counts lifecycle (public; isolated like the others) ──
+  const [projects, setProjects] = useState([]);
+  const [projLoading, setProjLoading] = useState(true);
+  const [projError, setProjError] = useState(null);
+
+  // Load the project list once on mount and reduce it to counts below — the
+  // same call and reducer the Projects page uses for its filter tabs, so the
+  // two pages can never disagree about the numbers.
   useEffect(() => {
-    // A useEffect callback can't be async itself (it must return a cleanup
-    // function, not a Promise), so the work lives in an inner async function.
-    const loadCounts = async () => {
-      console.log("[Dashboard] fetching projects for stat counts…");
+    let ignore = false;
+    (async () => {
+      console.log("[Dashboard] fetching projects for status counts…");
       try {
-        const projects = await fetchProjects();
-        const next = getStatusCounts(projects);
-        console.log("[Dashboard] counts:", next);
-        setCounts(next);
+        const list = await fetchProjects();
+        console.log(`[Dashboard] loaded ${list.length} projects`);
+        if (!ignore) setProjects(list);
       } catch (err) {
-        console.error("[Dashboard] load failed:", err.message);
-        setError(err.response?.data?.message || err.message);
+        console.error("[Dashboard] projects load failed:", err.message);
+        if (!ignore) setProjError(err.response?.data?.message || err.message);
       } finally {
-        setLoading(false);
+        if (!ignore) setProjLoading(false);
       }
+    })();
+    return () => {
+      ignore = true;
     };
-    loadCounts();
   }, []);
+
+  // Each count links to the Projects page, deep-linked to the matching filter.
+  const counts = getStatusCounts(projects);
+  const PROJECT_STATS = [
+    { id: "total", label: "Total Projects", value: counts.total, to: "/projects" },
+    { id: "active", label: "Active", value: counts.active, to: "/projects?status=active" },
+    { id: "completed", label: "Completed", value: counts.completed, to: "/projects?status=completed" },
+  ];
 
   // Fetch feedback only for admins. Skipping the call for visitors avoids a 401
   // → auto-logout (the endpoint requires a token).
@@ -97,48 +172,76 @@ const Dashboard = () => {
     };
   }, [isAdmin]);
 
-  // Each stat links to the Projects page, deep-linked to the matching filter.
+  // Each tile links to the page (or section) that substantiates its number.
+  // `??` on the live values: null means the fetch is pending or failed, so the
+  // dated snapshot shows instead — never a spinner or an error in a stat tile.
   const STATS = [
-    { id: 1, label: "Total Projects", value: counts.total, to: "/projects" },
-    { id: 2, label: "Active", value: counts.active, to: "/projects?status=active" },
-    { id: 3, label: "Completed", value: counts.completed, to: "/projects?status=completed" },
+    {
+      id: "contributions",
+      value: contributions ?? GITHUB_STATS_FALLBACK.contributions,
+      label: "Contributions",
+      sublabel: "GitHub, last 12 months",
+      href: `#${ACTIVITY_SECTION_ID}`,
+    },
+    {
+      id: "repos",
+      value: repoCount ?? GITHUB_STATS_FALLBACK.repoCount,
+      label: "Public repositories",
+      sublabel: "Original work, forks excluded",
+      to: "/github",
+    },
+    {
+      id: "integrations",
+      value: INTEGRATIONS.count,
+      label: "Production integrations",
+      sublabel: INTEGRATIONS.label,
+      to: "/about",
+    },
+    {
+      id: "internships",
+      value: INTERNSHIPS.count,
+      label: "Internships",
+      sublabel: INTERNSHIPS.label,
+      to: "/about",
+    },
   ];
 
   return (
-    <PageLayout
-      title="Dashboard"
-      subtitle="Overview of your projects and activity"
-    >
-      {/* ── Project stats — loading / error first, then the grid ── */}
-      {loading ? (
-        <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
-          Loading dashboard…
-        </p>
-      ) : error ? (
-        <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
-          Couldn’t load dashboard: {error}
-        </p>
-      ) : (
-        <div className={`${GRID.STATS} ${SPACING.GAP_4}`}>
-          {STATS.map(({ id, label, value, to }) => (
-            <Link key={id} to={to} className="block">
-              <Card className="h-full hover:border-accent">
-                <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
-                  {label}
-                </p>
-                <p
-                  className={`${TYPOGRAPHY.TEXT_2XL} ${TYPOGRAPHY.FONT_BOLD} text-text-primary ${SPACING.MT_2}`}
-                >
-                  {value}
-                </p>
-              </Card>
-            </Link>
-          ))}
+    // No title/subtitle: the hero below is the page heading.
+    <PageLayout>
+      {/* ── Hero — name, one-line pitch, and the two calls to action ── */}
+      <section aria-labelledby="hero-heading">
+        <h1 id="hero-heading" className={`${HERO.TITLE} text-text-primary`}>
+          {FULL_NAME}
+        </h1>
+        <p className={`${HERO.TAGLINE} text-text-secondary mt-3`}>{TAGLINE}</p>
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          {/* Primary — same accent-filled idiom as the app's other primary
+              buttons; py-1.5 matches the outlined CV button's height. */}
+          <Link
+            to="/projects"
+            className={`inline-flex items-center gap-1 ${ROUNDED.MD} bg-accent px-3 py-1.5
+              ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM} text-white hover:opacity-90
+              ${A11Y.FOCUS_RING}`}
+          >
+            View work
+            <ArrowRight size={ICON_SIZE.SM} aria-hidden="true" />
+          </Link>
+          <DownloadCvButton />
         </div>
-      )}
+      </section>
 
-      {/* ── GitHub activity — contribution calendar (visible to everyone) ── */}
-      <section className="mt-10">
+      {/* ── Stats — four tiles, each linking to its evidence ── */}
+      <div className={`${GRID.STATS} ${SPACING.GAP_4} mt-8`}>
+        {STATS.map(({ id, ...tile }) => (
+          <StatTile key={id} {...tile} />
+        ))}
+      </div>
+
+      {/* ── GitHub activity — contribution calendar (visible to everyone).
+          Anchored so the contributions tile can scroll here; scroll-mt-6
+          offsets the scrolling main element's p-6 padding. ── */}
+      <section id={ACTIVITY_SECTION_ID} className="mt-10 scroll-mt-6">
         <h2
           className={`${TYPOGRAPHY.TEXT_2XL} ${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary mb-4`}
         >
@@ -165,7 +268,9 @@ const Dashboard = () => {
         </Card>
       </section>
 
-      {/* ── Languages — donut of code bytes per language across public repos ── */}
+      {/* ── Languages — donut of code bytes per language across public repos.
+          Notebooks are excluded client-side (see lib/languageStats.js) so
+          notebook JSON doesn't drown the actual code. ── */}
       <section className="mt-10">
         <h2
           className={`${TYPOGRAPHY.TEXT_2XL} ${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary mb-4`}
@@ -189,6 +294,44 @@ const Dashboard = () => {
             <LanguageDonutChart totals={langTotals} />
           )}
         </Card>
+      </section>
+
+      {/* ── Projects — status counts, each tile deep-linking into the catalogue ── */}
+      <section className="mt-10">
+        <h2
+          className={`${TYPOGRAPHY.TEXT_2XL} ${TYPOGRAPHY.FONT_SEMIBOLD} text-text-primary mb-4`}
+        >
+          Projects
+        </h2>
+
+        {projLoading ? (
+          <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
+            Loading projects…
+          </p>
+        ) : projError ? (
+          <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
+            Couldn’t load projects: {projError}
+          </p>
+        ) : (
+          // Label over number — the catalogue's own summary shape, distinct
+          // from the number-first hero tiles above.
+          <div className={`${GRID.PROJECT_STATS} ${SPACING.GAP_4}`}>
+            {PROJECT_STATS.map(({ id, label, value, to }) => (
+              <Link key={id} to={to} className="block">
+                <Card className="h-full hover:border-accent">
+                  <p className={`${TYPOGRAPHY.TEXT_SM} text-text-secondary`}>
+                    {label}
+                  </p>
+                  <p
+                    className={`${TYPOGRAPHY.TEXT_2XL} ${TYPOGRAPHY.FONT_BOLD} text-text-primary ${SPACING.MT_2}`}
+                  >
+                    {value}
+                  </p>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ── Feedback (admin-only) — cards grouped by status ── */}

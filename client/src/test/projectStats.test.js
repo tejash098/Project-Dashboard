@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { getStatusCounts } from "../lib/projectStats.js";
 
 /**
- * getStatusCounts feeds the Dashboard stat cards and the Projects filter tabs,
+ * getStatusCounts feeds the Dashboard project tiles and the Projects filter tabs,
  * so its shape is load-bearing: the tabs read `total`, `active` and `completed`
  * by name and would render "undefined" if any of them went missing.
  */

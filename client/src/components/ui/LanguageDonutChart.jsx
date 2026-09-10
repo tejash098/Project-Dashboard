@@ -1,6 +1,10 @@
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { getLanguageColor } from "../../config/languageColors";
-import { buildDonutData, OTHER_LABEL } from "../../lib/languageStats";
+import {
+  buildDonutData,
+  LANGUAGE_METHOD_LABEL,
+  OTHER_LABEL,
+} from "../../lib/languageStats";
 import { BORDER, ROUNDED, TYPOGRAPHY } from "../../config/constants";
 
 /**
@@ -46,6 +50,10 @@ const LanguageTooltip = ({ active, payload }) => {
  * dots); the long tail folds into a neutral "Other". Identity is never
  * color-alone: the HTML legend beside the chart names every slice.
  *
+ * Honesty note: notebooks are excluded (see lib/languageStats.js) and the
+ * caption under the chart says so — a reader should never have to guess how
+ * a percentage was measured.
+ *
  * Theming note: CSS variables don't resolve inside SVG presentation
  * attributes, so theme-reactive colors (slice-gap stroke, the "Other" fill)
  * are applied via CSS classes — a stylesheet rule beats the attribute, and it
@@ -65,75 +73,86 @@ const LanguageDonutChart = ({ totals }) => {
   const summary = data.map((d) => `${d.name} ${d.percent}%`).join(", ");
 
   return (
-    <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-center sm:gap-10">
-      {/* Wrapper supplies the definite height ResponsiveContainer needs, plus
-          the slice-gap stroke (also overrides recharts' default white). */}
-      <div
-        role="img"
-        aria-label={`Language breakdown: ${summary}`}
-        className="relative h-56 w-full max-w-xs shrink-0 sm:w-56 [&_.recharts-sector]:stroke-surface"
-      >
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              dataKey="value"
-              nameKey="name"
-              innerRadius="65%"
-              outerRadius="90%"
-              strokeWidth={2}
-            >
-              {data.map((slice) => (
-                // "Other" is neutral by design — its color is a CSS var, which
-                // only works as a class here (see theming note above).
-                <Cell
-                  key={slice.name}
-                  fill={getLanguageColor(slice.name)}
-                  className={
-                    slice.name === OTHER_LABEL ? "fill-text-secondary" : undefined
-                  }
-                />
-              ))}
-            </Pie>
-            <Tooltip content={<LanguageTooltip />} />
-          </PieChart>
-        </ResponsiveContainer>
+    // Column root: chart + legend row, then the method caption beneath.
+    <div className="flex flex-col">
+      <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-center sm:gap-10">
+        {/* Wrapper supplies the definite height ResponsiveContainer needs, plus
+            the slice-gap stroke (also overrides recharts' default white). */}
+        <div
+          role="img"
+          aria-label={`Language breakdown (${LANGUAGE_METHOD_LABEL}): ${summary}`}
+          className="relative h-56 w-full max-w-xs shrink-0 sm:w-56 [&_.recharts-sector]:stroke-surface"
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                dataKey="value"
+                nameKey="name"
+                innerRadius="65%"
+                outerRadius="90%"
+                strokeWidth={2}
+              >
+                {data.map((slice) => (
+                  // "Other" is neutral by design — its color is a CSS var, which
+                  // only works as a class here (see theming note above).
+                  <Cell
+                    key={slice.name}
+                    fill={getLanguageColor(slice.name)}
+                    className={
+                      slice.name === OTHER_LABEL ? "fill-text-secondary" : undefined
+                    }
+                  />
+                ))}
+              </Pie>
+              <Tooltip content={<LanguageTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
 
-        {/* Donut-hole headline — hover-transparent so slice tooltips work. */}
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span
-            className={`${TYPOGRAPHY.TEXT_2XL} ${TYPOGRAPHY.FONT_BOLD} text-text-primary`}
-          >
-            {top.percent}%
-          </span>
-          <span className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary`}>
-            {top.name}
-          </span>
+          {/* Donut-hole headline — hover-transparent so slice tooltips work. */}
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+            <span
+              className={`${TYPOGRAPHY.TEXT_2XL} ${TYPOGRAPHY.FONT_BOLD} text-text-primary`}
+            >
+              {top.percent}%
+            </span>
+            <span className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary`}>
+              {top.name}
+            </span>
+          </div>
         </div>
+
+        {/* Custom HTML legend — names + percents in text tokens, with the same
+            colored-dot idiom as RepoCard (inline style resolves the CSS-var
+            fallback for "Other" just fine, unlike SVG attributes). */}
+        <ul className="flex w-full max-w-xs flex-col gap-2">
+          {data.map((slice) => (
+            <li key={slice.name} className="flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: getLanguageColor(slice.name) }}
+              />
+              <span className={`${TYPOGRAPHY.TEXT_SM} text-text-primary`}>
+                {slice.name}
+              </span>
+              <span
+                className={`ml-auto ${TYPOGRAPHY.TEXT_SM} text-text-secondary tabular-nums`}
+              >
+                {slice.percent}%
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      {/* Custom HTML legend — names + percents in text tokens, with the same
-          colored-dot idiom as RepoCard (inline style resolves the CSS-var
-          fallback for "Other" just fine, unlike SVG attributes). */}
-      <ul className="flex w-full max-w-xs flex-col gap-2">
-        {data.map((slice) => (
-          <li key={slice.name} className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: getLanguageColor(slice.name) }}
-            />
-            <span className={`${TYPOGRAPHY.TEXT_SM} text-text-primary`}>
-              {slice.name}
-            </span>
-            <span
-              className={`ml-auto ${TYPOGRAPHY.TEXT_SM} text-text-secondary tabular-nums`}
-            >
-              {slice.percent}%
-            </span>
-          </li>
-        ))}
-      </ul>
+      {/* Method caption — states the measurement so the numbers can be
+          trusted (and questioned) rather than taken as "share of code". */}
+      <p
+        className={`${TYPOGRAPHY.TEXT_XS} text-text-secondary mt-4 text-center sm:text-left`}
+      >
+        Share {LANGUAGE_METHOD_LABEL}.
+      </p>
     </div>
   );
 };

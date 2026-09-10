@@ -1,5 +1,4 @@
 import LaunchIcon from "@mui/icons-material/Launch";
-import DownloadIcon from "@mui/icons-material/Download";
 import SchoolIcon from "@mui/icons-material/School";
 import WorkIcon from "@mui/icons-material/Work";
 // Timeline styles are imported globally in index.css inside a low-priority
@@ -10,22 +9,15 @@ import {
 } from "react-vertical-timeline-component";
 import PageLayout from "../layouts/PageLayout";
 import Card from "../components/ui/Card";
+import DownloadCvButton from "../components/ui/DownloadCvButton";
 // Bundled certificate PDFs — Vite resolves each to a served asset URL.
 import nbpdclCert from "../assets/NBPDCL_cert.pdf";
 import btechCert from "../assets/BTECH_cert.pdf";
 import class12Cert from "../assets/CLASS12_cert.pdf";
 import class10Cert from "../assets/CLASS10_cert.pdf";
-// Bundled résumé — downloaded by the header "Download CV" button.
-import tejashCV from "../assets/Tejash_CV.pdf";
 import { cloudinary, CLOUDINARY_ASSETS } from "../config/cloudinary";
 import { FULL_NAME } from "../config/profile";
-import {
-  TYPOGRAPHY,
-  ROUNDED,
-  BORDER,
-  A11Y,
-  ICON_SIZE,
-} from "../config/constants";
+import { TYPOGRAPHY, ROUNDED, A11Y, ICON_SIZE } from "../config/constants";
 
 /** Cloudinary transform applied to every logo for a small, optimized asset. */
 const LOGO_TX = "f_auto,q_auto,w_96,h_96,c_fit";
@@ -271,20 +263,8 @@ const About = () => {
     <PageLayout
       title="About Me"
       subtitle="Get to know me, my background, and my work"
-      actions={
-        // Downloads the bundled résumé directly (download attr forces a save).
-        // Styled to match the docs "Copy page" button (outlined, accent hover).
-        <a
-          href={tejashCV}
-          download="Tejash_CV.pdf"
-          className={`inline-flex items-center gap-1.5 ${ROUNDED.MD} border ${BORDER.DEFAULT}
-            px-3 py-1.5 ${TYPOGRAPHY.TEXT_SM} ${TYPOGRAPHY.FONT_MEDIUM} text-text-secondary
-            hover:bg-accent-subtle hover:text-accent ${A11Y.FOCUS_RING}`}
-        >
-          <DownloadIcon sx={{ fontSize: ICON_SIZE.SM }} />
-          Download CV
-        </a>
-      }
+      // Shared with the landing hero — one place owns the résumé asset.
+      actions={<DownloadCvButton />}
     >
       {/* ── Career objective ── */}
       <section>

@@ -86,7 +86,7 @@ The two applications are independent npm projects in one repository, under
 
 ### Features
 
-- Dashboard with project metrics and GitHub language statistics
+- Landing page with a hero, GitHub stat tiles, a contribution calendar, language statistics, and project status counts
 - Public project catalogue and project detail pages
 - Stored screenshot of each deployed site on every project card
 - Live embedded preview of a deployment on the project detail page
@@ -116,7 +116,7 @@ interactive Swagger UI at `/docs/swagger`.
 
 ### Application routes
 
-`/` dashboard overview, `/about` about page, `/projects` catalogue,
+`/` home page (hero, stat tiles, contribution calendar, language chart, project counts), `/about` about page, `/projects` catalogue,
 `/projects/:slug` project details, `/github` GitHub profile and repositories,
 `/docs` API documentation, `/docs/swagger` Swagger UI, `/contact` contact and
 feedback form, `/projects/new` protected project creation, `/report` protected
@@ -134,9 +134,19 @@ Tejash's GitHub account is **tejash098** — https://github.com/tejash098.
 Public repositories are listed at https://github.com/tejash098?tab=repositories.
 
 The dashboard's GitHub page shows his profile, public repositories, and a
-contribution calendar. The dashboard home page shows a donut chart of total
-bytes of code per language, aggregated across all of his public non-fork
-repositories through the GitHub API and cached for 24 hours.
+contribution calendar. The dashboard home page opens with a hero (his name, a
+one-line pitch, and "View work" / "Download CV" buttons) followed by four stat
+tiles: GitHub contributions in the last 12 months and public non-fork
+repositories (both fetched live, with a static fallback), production
+integrations (Salesforce, Zapier, Make) and internships (Projetly, NBPDCL).
+Below that sit the contribution calendar and a donut chart of total bytes of
+code per language, aggregated across all of his public non-fork repositories
+through the GitHub API and cached for 24 hours. Jupyter notebooks are excluded
+from that chart on the client, because notebook files store cell outputs as
+JSON and would otherwise dominate the byte counts; the caption under the chart
+says so ("by bytes of code, notebooks excluded"). The home page ends with
+three project tiles — total, active and completed counts — each linking to the
+matching filtered view of the catalogue.
 
 His most-used languages reflect the stack above — primarily JavaScript, with
 HTML and CSS alongside it.
