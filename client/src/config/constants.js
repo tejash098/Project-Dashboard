@@ -127,6 +127,9 @@ export const GRID = {
     // Four landing-page stat tiles — 2×2 on phones and tablets, one row from
     // `lg` so the numbers read as a single strip under the hero.
     STATS: "grid grid-cols-2 lg:grid-cols-4",
+    // Three project-status tiles (total / active / completed) — stacked on
+    // phones, one row from `sm`.
+    PROJECT_STATS: "grid grid-cols-1 sm:grid-cols-3",
     // One project per row — each card pairs a wide preview with its details, so
     // the old 3-up layout no longer leaves enough width for both columns.
     PROJECTS: "grid grid-cols-1",

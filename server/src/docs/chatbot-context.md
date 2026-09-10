@@ -86,7 +86,7 @@ The two applications are independent npm projects in one repository, under
 
 ### Features
 
-- Landing page with a hero, GitHub stat tiles, a contribution calendar, language statistics, and the most recent projects
+- Landing page with a hero, GitHub stat tiles, a contribution calendar, language statistics, and project status counts
 - Public project catalogue and project detail pages
 - Stored screenshot of each deployed site on every project card
 - Live embedded preview of a deployment on the project detail page
@@ -116,7 +116,7 @@ interactive Swagger UI at `/docs/swagger`.
 
 ### Application routes
 
-`/` home page (hero, stat tiles, contribution calendar, language chart, recent projects), `/about` about page, `/projects` catalogue,
+`/` home page (hero, stat tiles, contribution calendar, language chart, project counts), `/about` about page, `/projects` catalogue,
 `/projects/:slug` project details, `/github` GitHub profile and repositories,
 `/docs` API documentation, `/docs/swagger` Swagger UI, `/contact` contact and
 feedback form, `/projects/new` protected project creation, `/report` protected
@@ -144,9 +144,9 @@ code per language, aggregated across all of his public non-fork repositories
 through the GitHub API and cached for 24 hours. Jupyter notebooks are excluded
 from that chart on the client, because notebook files store cell outputs as
 JSON and would otherwise dominate the byte counts; the caption under the chart
-says so ("by bytes of code, notebooks excluded"). The home page ends with the
-three most recently updated projects, each linking to its detail page, with a
-"View all" link to the full catalogue.
+says so ("by bytes of code, notebooks excluded"). The home page ends with
+three project tiles — total, active and completed counts — each linking to the
+matching filtered view of the catalogue.
 
 His most-used languages reflect the stack above — primarily JavaScript, with
 HTML and CSS alongside it.
