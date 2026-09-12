@@ -5,6 +5,7 @@ import CodeBlock from "../components/ui/CodeBlock";
 import CopyPageMenu from "../components/ui/CopyPageMenu";
 import EndpointCard from "../components/ui/EndpointCard";
 import FilterTabs from "../components/ui/FilterTabs";
+import SwaggerUiButton from "../components/ui/SwaggerUiButton";
 import {
   API_OVERVIEW,
   AUTH_INFO,
@@ -19,6 +20,9 @@ import { ROUNDED, TYPOGRAPHY } from "../config/constants";
 
 /** Public URL where the backend serves this page as raw Markdown. */
 const DOCS_MD_URL = `${import.meta.env.SERVER_BASE_URL}/docs.md`;
+
+/** Client route of the interactive Swagger UI view (see `App.jsx`). */
+const SWAGGER_URL = "/docs/swagger";
 
 /** In-page nav targets — label + the section `id` each anchors to. */
 const SECTIONS = [
@@ -134,12 +138,17 @@ const Docs = () => {
     <PageLayout
       title="API Documentation"
       subtitle="Reference for the Project Dashboard REST API"
+      // Header actions — "Try in Swagger UI" beside the "Copy page" split
+      // button; PageLayout lays the two out in a gapped flex row.
       actions={
-        <CopyPageMenu
-          markdown={markdown}
-          markdownUrl={DOCS_MD_URL}
-          swaggerUrl="/docs/swagger"
-        />
+        <>
+          <SwaggerUiButton to={SWAGGER_URL} />
+          <CopyPageMenu
+            markdown={markdown}
+            markdownUrl={DOCS_MD_URL}
+            swaggerUrl={SWAGGER_URL}
+          />
+        </>
       }
     >
       {/* ── In-page nav — quick jumps to each section ── */}
