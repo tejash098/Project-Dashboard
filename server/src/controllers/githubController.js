@@ -20,6 +20,15 @@ const langStatsCacheKey = (username) => `github:lang-stats:${username}`;
 let inflightFanout = null;
 
 /**
+ * Request headers for GitHub calls. With GITHUB_TOKEN set, requests count
+ * against the token's 5,000/hr budget instead of the server IP's 60/hr.
+ * @type {Record<string, string>}
+ */
+const githubHeaders = config.githubToken
+  ? { Authorization: `Bearer ${config.githubToken}` }
+  : {};
+
+/**
  * GET a GitHub API URL and parse the JSON body. Unlike axios, native fetch
  * resolves on HTTP error statuses, so failures are converted to throws here —
  * tagging rate-limit exhaustion so the handler can pick a friendly message.
@@ -28,12 +37,14 @@ let inflightFanout = null;
  * @throws {Error & { status?: number, rateLimited?: boolean }} On any non-2xx response.
  */
 const fetchJson = async (url) => {
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: githubHeaders });
   if (!res.ok) {
     const err = new Error(`GitHub responded ${res.status} for ${url}`);
     err.status = res.status;
+    // GitHub signals an exhausted primary rate limit with either 403 or 429.
     err.rateLimited =
-      res.status === 403 && res.headers.get("x-ratelimit-remaining") === "0";
+      (res.status === 403 || res.status === 429) &&
+      res.headers.get("x-ratelimit-remaining") === "0";
     throw err;
   }
   return res.json();
@@ -120,7 +131,11 @@ export const getLanguageStats = async (req, res) => {
     }
 
     if (!inflightFanout) {
-      console.log(`[github] lang-stats cache miss — fetching from GitHub (${username})`);
+      console.log(
+        `[github] lang-stats cache miss — fetching from GitHub (${username}, ${
+          config.githubToken ? "token" : "anonymous"
+        })`,
+      );
       inflightFanout = fetchLanguageTotals(username).finally(() => {
         inflightFanout = null;
       });
@@ -135,6 +150,11 @@ export const getLanguageStats = async (req, res) => {
     res.status(200).json({ status: "success", data: totals });
   } catch (error) {
     console.error("[github] language-stats error:", error.message);
+    // GitHub rejects a bad token even on public endpoints, so an expired or
+    // mistyped GITHUB_TOKEN breaks every call — name the likely cause.
+    if (error.status === 401 && config.githubToken) {
+      console.error("[github] 401 with GITHUB_TOKEN set — token invalid or expired?");
+    }
     // 503: upstream (GitHub) temporarily unavailable, not a fault of ours.
     // The rateLimited flag can come from the repo-list call or the fan-out —
     // both get the friendly message here rather than the raw GitHub error.

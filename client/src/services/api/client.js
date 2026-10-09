@@ -14,6 +14,34 @@ import { startRequest, endRequest } from "./slowRequestMonitor";
 const REQUEST_TIMEOUT_MS = 90_000;
 
 /**
+ * How many times a GET is re-sent when it never reached the server. Pages
+ * fetch once on mount, so without this a page loaded while the API is still
+ * booting (connecting to MongoDB and Redis, a few seconds) stays on its error
+ * state until a manual reload — even after the server comes up.
+ */
+const MAX_RETRIES = 4;
+
+/** First retry delay; it doubles each attempt (1s, 2s, 4s, 8s ≈ 15s in all). */
+const RETRY_BASE_DELAY_MS = 1_000;
+
+/**
+ * Whether a failed request should be re-sent. Only GETs (safe to repeat) that
+ * got no response at all — connection refused, DNS, network down. Excluded:
+ * timeouts, which already waited 90s; cancellations, which aren't failures;
+ * and any HTTP status, since the server answered and repeating won't change
+ * that (our 503 means "GitHub rate limit, try in an hour").
+ * @param {import("axios").AxiosError} error - The rejected request.
+ * @returns {boolean} True when another attempt is worthwhile.
+ */
+const shouldRetry = (error) =>
+  error.config?.method === "get" &&
+  !error.response &&
+  !axios.isCancel(error) &&
+  error.code !== "ECONNABORTED" &&
+  error.code !== "ETIMEDOUT" &&
+  (error.config.retryCount ?? 0) < MAX_RETRIES;
+
+/**
  * Shared axios instance for the whole API. The base URL comes from
  * SERVER_BASE_URL, exposed to the client via the `SERVER_` envPrefix in
  * vite.config.js. The API wraps payloads as `{ status, data }`, and axios nests
@@ -54,8 +82,9 @@ api.interceptors.request.use((config) => {
 });
 
 /**
- * Response interceptor — on a 401 (missing/expired/invalid token) clear the
- * persisted session and broadcast `auth:unauthorized` so AuthContext can flip
+ * Response interceptor — re-sends GETs that never reached the server (see
+ * shouldRetry). On a 401 (missing/expired/invalid token) it clears the
+ * persisted session and broadcasts `auth:unauthorized` so AuthContext can flip
  * the app back to a logged-out state. The rejection still propagates so the
  * calling code can handle the error too.
  */
@@ -65,7 +94,7 @@ api.interceptors.response.use(
     console.log(`[api] ← ${res.status} ${res.config.url}`);
     return res;
   },
-  (error) => {
+  async (error) => {
     // Settled either way — a failed request still ends the wait, so this runs
     // before any of the status branches below can return.
     endRequest();
@@ -74,6 +103,19 @@ api.interceptors.response.use(
     console.error(
       `[api] ✕ ${status ?? "network"} ${error.config?.url ?? ""}: ${error.message}`,
     );
+
+    // Server not reachable yet — back off and re-send. Returning the retry
+    // makes it the caller's result, so callers never see the failed attempts,
+    // and the unreachable toast below only fires once retries run out.
+    if (shouldRetry(error)) {
+      const attempt = (error.config.retryCount ?? 0) + 1;
+      const delay = RETRY_BASE_DELAY_MS * 2 ** (attempt - 1);
+      console.warn(
+        `[api] retry ${attempt}/${MAX_RETRIES} for ${error.config.url} in ${delay}ms`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return api({ ...error.config, retryCount: attempt });
+    }
     if (status === 401) {
       console.warn("[api] 401 → clearing session, broadcasting auth:unauthorized");
       localStorage.removeItem(AUTH_TOKEN_KEY);
