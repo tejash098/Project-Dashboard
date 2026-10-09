@@ -35,21 +35,46 @@ if (client) {
 }
 
 /**
- * Kick off the Redis connection. Intentionally safe to fire-and-forget from
- * the bootstrap: a bad host/password must log — never hang or kill the boot
- * (node-redis retries forever by default, so connect() may never settle).
- * @returns {Promise<void>} Resolves when connected or after a logged failure.
+ * Start the Redis connection and wait, at most `timeoutMs`, for it to be ready.
+ *
+ * Boot awaits this so the first requests see a ready cache: anything served
+ * earlier reads as a cache miss, and a language-stats miss spends ~25 GitHub
+ * API calls on data that was already cached. The cap keeps Redis optional — a
+ * bad host/password must log, never hang or kill the boot (node-redis retries
+ * forever by default, so connect() may never settle).
+ * @param {number} [timeoutMs=config.redisConnectTimeoutMs] - Longest wait.
+ * @returns {Promise<void>} Resolves when ready, on failure, or at the timeout —
+ *   never rejects. Reconnects carry on in the background either way.
  */
-export const connectRedis = async () => {
+export const connectRedis = async (timeoutMs = config.redisConnectTimeoutMs) => {
   if (!client) {
     console.warn("[redis] REDIS_HOST not set — language-stats caching disabled");
     return;
   }
-  try {
-    await client.connect();
-  } catch (err) {
-    // Keep serving traffic without a cache; reconnects continue in background.
-    console.error("[redis] initial connect failed:", err.message);
+
+  // Handle the rejection here, not in the await below: if the timeout wins the
+  // race, nothing awaits this promise any more, and an unhandled rejection
+  // would crash the process.
+  const connecting = client.connect().then(
+    () => "ready",
+    (err) => {
+      // Keep serving traffic without a cache; reconnects continue in background.
+      console.error("[redis] initial connect failed:", err.message);
+      return "failed";
+    },
+  );
+
+  let timer;
+  const timedOut = new Promise((resolve) => {
+    timer = setTimeout(() => resolve("timeout"), timeoutMs);
+  });
+
+  const outcome = await Promise.race([connecting, timedOut]);
+  clearTimeout(timer);
+  if (outcome === "timeout") {
+    console.warn(
+      `[redis] not ready after ${timeoutMs}ms — serving uncached until it connects`,
+    );
   }
 };
 

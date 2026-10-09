@@ -84,6 +84,10 @@ const config = Object.freeze({
   // donut chart and the repos page should describe the same account.
   githubUsername: process.env.GITHUB_USERNAME || "tejash098",
   githubApiBase: "https://api.github.com",
+  // Optional personal access token (no scopes needed — the data is public).
+  // Unauthenticated calls get 60/hr per IP, and one cache miss spends ~25 of
+  // them; a token raises the budget to 5,000/hr, tied to the account instead.
+  githubToken: process.env.GITHUB_TOKEN,
   langStatsTtlSeconds: 86400, // how long cached language totals stay fresh (24h)
 
   // ── Redis (optional — cache for GitHub language stats) ──
@@ -94,6 +98,9 @@ const config = Object.freeze({
   redisPassword: process.env.REDIS_PASSWORD,
   redisHost: process.env.REDIS_HOST,
   redisPort: Number(process.env.REDIS_PORT) || 6379,
+  // How long boot waits for Redis before listening anyway. A healthy cloud
+  // instance is ready in ~1.5s; the cap only bites when Redis is down.
+  redisConnectTimeoutMs: 3000,
 
   // ── Rate limiting (per-IP, Redis-backed) ──
   // Configurable via env so production can tune without a redeploy.

@@ -11,10 +11,11 @@ const startServer = async () => {
   await connectDB();
   console.log("[server] startup: seeding admin…");
   await seedAdmin(); // create the bootstrap admin if none exists yet
-  // Fire-and-forget: Redis is an optional cache, and with a bad host the
-  // connect promise may never settle (infinite reconnects) — never block boot.
+  // Awaited so the first requests hit a ready cache instead of fanning out to
+  // GitHub, but bounded: Redis is optional, and connectRedis gives up waiting
+  // after a few seconds (with a bad host it would otherwise never settle).
   console.log("[server] startup: connecting to Redis…");
-  connectRedis();
+  await connectRedis();
   app.listen(PORT, () => {
     console.log(`[server] listening on http://localhost:${PORT}`);
   });
