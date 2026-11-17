@@ -47,7 +47,7 @@ A full-stack project portfolio dashboard for publishing projects, tracking GitHu
 - Markdown API documentation endpoint
 - Chatbot API answering questions about the developer and this project, grounded in a published reference document
 - Redis-backed GitHub statistics caching with direct-fetch fallback
-- Per-IP API rate limiting
+- Per-IP API rate limiting on every route, with tighter budgets for login, feedback submission, and chat; counted in Redis, with an in-memory fallback when Redis is unavailable
 - Responsive interface with theme and sidebar controls
 - Per-page browser tab titles
 - Desktop-mode hint for visitors on small touch screens
@@ -107,7 +107,7 @@ CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 ```
 
-Optional settings include `ADMIN_USERNAME` and `ADMIN_PASSWORD` for bootstrap admin creation, Redis connection values, `GITHUB_USERNAME`, `GITHUB_TOKEN` (raises the language-stats GitHub budget from 60 to 5,000 requests/hour), rate-limit values, and the chatbot's `GEMINI_API_KEY` plus its model and timeout settings. The chat rate limits are fixed in `server/src/config/env.js` rather than the environment. See `server/.env.example` for the complete list.
+Optional settings include `ADMIN_USERNAME` and `ADMIN_PASSWORD` for bootstrap admin creation, Redis connection values, `GITHUB_USERNAME`, `GITHUB_TOKEN` (raises the language-stats GitHub budget from 60 to 5,000 requests/hour), rate-limit values, and the chatbot's `GEMINI_API_KEY` plus its model and timeout settings. The chat, login, and feedback rate limits are fixed in `server/src/config/env.js` rather than the environment. See `server/.env.example` for the complete list.
 
 Project preview screenshots are captured through Microlink and stored in your
 own Cloudinary account. The keyless tier is enough, because captures happen on

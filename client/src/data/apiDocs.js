@@ -94,7 +94,9 @@ export const ENDPOINTS = [
     path: "/api/auth/login",
     description:
       "Authenticate an admin by username + password and receive a signed JWT " +
-      "plus the admin profile. The token is valid for 7 days.",
+      "plus the admin profile. The token is valid for 7 days. Rate limited to " +
+      "5 attempts / 15 minutes per IP — tighter than the global budget, to " +
+      "blunt password guessing. Every attempt counts, successful or not.",
     auth: false,
     group: "Auth",
     requestBody: {
@@ -114,6 +116,7 @@ export const ENDPOINTS = [
       { code: 200, meaning: "Authenticated — token issued" },
       { code: 400, meaning: "Missing username or password" },
       { code: 401, meaning: "Invalid username or password" },
+      { code: 429, meaning: "Rate limit exceeded — 5 attempts/15 min per IP" },
       { code: 500, meaning: "Server error" },
     ],
   },
@@ -471,7 +474,9 @@ export const ENDPOINTS = [
       "multipart/form-data so an optional `image` file can ride along; the " +
       "server uploads it to Cloudinary and stores the resulting URL. Images " +
       "must be 2 MB or smaller. A unique 16-digit `f_id` and `status: " +
-      "\"active\"` are assigned automatically.",
+      "\"active\"` are assigned automatically. Rate limited to 5 submissions " +
+      "/ hour per IP — tighter than the global budget, to keep spam out of " +
+      "the inbox.",
     auth: false,
     group: "Feedback",
     requestBody: {
@@ -503,6 +508,7 @@ export const ENDPOINTS = [
         code: 400,
         meaning: "Validation failed or image is larger than 2 MB",
       },
+      { code: 429, meaning: "Rate limit exceeded — 5 submissions/hour per IP" },
     ],
   },
   {

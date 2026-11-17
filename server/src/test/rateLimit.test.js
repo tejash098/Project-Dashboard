@@ -73,27 +73,38 @@ describe("rate limiting", () => {
       expect(mockRedis.expire).not.toHaveBeenCalled();
     });
 
-    it("lets requests through when Redis is unavailable", async () => {
-      // Degrade-open is deliberate for the global bucket: browsing must not
-      // break because a cache is down.
+    it("keeps enforcing its budget in memory when Redis is unavailable", async () => {
+      // Redis is optional in this project, so degrading open would leave the
+      // whole API unlimited on any deploy without it.
       mockRedis.isReady = false;
+
+      for (let i = 0; i < 15; i += 1) {
+        const next = vi.fn();
+        await rateLimit(makeReq(), makeRes(), next);
+        expect(next).toHaveBeenCalled();
+      }
+
+      const next = vi.fn();
+      const res = makeRes();
+      await rateLimit(makeReq(), res, next);
+
+      expect(res.statusCode).toBe(429);
+      expect(res.headers["Retry-After"]).toBe("60");
+      expect(next).not.toHaveBeenCalled();
+      expect(mockRedis.incr).not.toHaveBeenCalled();
+    });
+
+    it("counts in memory when Redis throws mid-request", async () => {
+      mockRedis.incr.mockRejectedValue(new Error("connection reset"));
       const next = vi.fn();
       const res = makeRes();
 
       await rateLimit(makeReq(), res, next);
 
+      // Still let through (it is the first request), but counted — the headers
+      // are only set once a count exists.
       expect(next).toHaveBeenCalled();
-      expect(res.statusCode).toBeUndefined();
-      expect(res.headers).toEqual({});
-    });
-
-    it("lets requests through when Redis throws", async () => {
-      mockRedis.incr.mockRejectedValue(new Error("connection reset"));
-      const next = vi.fn();
-
-      await rateLimit(makeReq(), makeRes(), next);
-
-      expect(next).toHaveBeenCalled();
+      expect(res.headers["X-RateLimit-Remaining"]).toBe("14");
     });
   });
 

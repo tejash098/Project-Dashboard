@@ -17,8 +17,7 @@ import { createRateLimit } from "../middleware/rateLimit.js";
  * stay at or below `rateLimitMax`, or the global bucket binds first and these
  * never take effect.
  *
- * Both opt into the in-memory fallback. The global limiter degrades open when
- * Redis is unavailable, which is right for page loads and wrong here: an
+ * Both opt into the in-memory fallback, like every bucket in the app: an
  * unmetered chat endpoint spends money for as long as Redis stays down.
  */
 const router = express.Router();
