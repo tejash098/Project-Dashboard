@@ -25,9 +25,12 @@ const DOCS_MARKDOWN = readFileSync(join(__dirname, "docs", "docs.md"), "utf-8");
 app.set("trust proxy", 1);
 
 // Middleware
+// Order matters: cors first so a 429 still carries CORS headers (the client's
+// rate-limit toast reads the response), then the limiter, then body parsing —
+// an over-budget request is rejected before its body is read.
 app.use(cors());
-app.use(express.json());
 app.use(rateLimit);
+app.use(express.json());
 
 // Request tracer — logs every incoming request (method + path + ms taken).
 // Bodies are intentionally NOT logged, since the login route carries a password.

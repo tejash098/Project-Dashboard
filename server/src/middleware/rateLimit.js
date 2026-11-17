@@ -16,9 +16,11 @@ import { redisClient } from "../config/redis.js";
  */
 
 /**
- * In-memory counters, used only by buckets that opt into `fallbackInMemory`.
- * Per-process and therefore approximate behind multiple instances, which is
- * fine: it exists to stop runaway spend when Redis is gone, not to be exact.
+ * In-memory counters, used only while Redis is unavailable and only by buckets
+ * that opt into `fallbackInMemory` (every bucket in this app does). Redis stays
+ * the source of truth whenever it is connected. Per-process and therefore
+ * approximate behind multiple instances, which is fine: it exists so an outage
+ * never leaves the API unmetered, not to be exact.
  * @type {Map<string, { count: number, resetAt: number }>}
  */
 const memoryBuckets = new Map();
@@ -78,9 +80,9 @@ const describeWindow = (seconds) => {
  * @param {number} options.windowSeconds - Window length in seconds.
  * @param {string} options.prefix - Redis key prefix; the client IP is appended.
  * @param {boolean} [options.fallbackInMemory] - Count in this process when Redis
- *   is unavailable, instead of letting the request through. Off by default so
- *   the global limiter keeps its degrade-open behaviour; on for buckets where
- *   an unlimited request costs real money.
+ *   is unavailable, instead of letting the request through. Off by default in
+ *   the factory, but every bucket in this app turns it on: Redis is optional
+ *   here, so degrading open would leave the API unlimited for whole deploys.
  * @returns {import("express").RequestHandler} The middleware.
  */
 export const createRateLimit =
@@ -104,7 +106,8 @@ export const createRateLimit =
     } else if (fallbackInMemory) {
       count = memoryIncrement(key, windowSeconds);
     } else {
-      // Redis down or unconfigured → skip limiting (graceful degradation).
+      // Redis down or unconfigured, and this bucket did not ask for the
+      // in-memory fallback → skip limiting.
       return next();
     }
 
@@ -130,12 +133,17 @@ export const createRateLimit =
 /**
  * Global limiter, applied in app.js — no routes are exempt.
  *
- * Unchanged from before the factory refactor: same 15 req/60s default, same
- * `rate-limit:<ip>` key format (so counters in a live Redis survive the
- * deploy), and the same degrade-open behaviour when Redis is unavailable.
+ * Same 15 req/60s default and `rate-limit:<ip>` key format as before the
+ * factory refactor (so counters in a live Redis survive the deploy).
+ *
+ * Counts in Redis whenever it is connected and falls back to process memory
+ * when it is not. It used to degrade open instead, which meant a deploy without
+ * Redis had no limit on anything but chat — including the GitHub stats route,
+ * which loses its cache in the same outage and would hit GitHub on every call.
  */
 export const rateLimit = createRateLimit({
   max: config.rateLimitMax,
   windowSeconds: config.rateLimitWindowSeconds,
   prefix: "rate-limit",
+  fallbackInMemory: true,
 });

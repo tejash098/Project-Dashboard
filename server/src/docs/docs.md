@@ -76,7 +76,7 @@ Reads are public; writes require an admin bearer token.
 
 #### POST /api/auth/login
 
-Authenticate an admin by username + password and receive a signed JWT plus the admin profile. The token is valid for 7 days.
+Authenticate an admin by username + password and receive a signed JWT plus the admin profile. The token is valid for 7 days. Rate limited to 5 attempts / 15 minutes per IP — tighter than the global budget, to blunt password guessing. Every attempt counts, successful or not.
 
 **Auth required:** No
 
@@ -110,6 +110,7 @@ Authenticate an admin by username + password and receive a signed JWT plus the a
 | 200 | Authenticated — token issued |
 | 400 | Missing username or password |
 | 401 | Invalid username or password |
+| 429 | Rate limit exceeded — 5 attempts/15 min per IP |
 | 500 | Server error |
 
 #### GET /api/auth/me
@@ -512,7 +513,7 @@ Recapture the project’s preview screenshot from its `liveUrl` and store it on 
 
 #### POST /api/feedback
 
-Submit a contact-form feedback. Public — no auth required. Sent as multipart/form-data so an optional `image` file can ride along; the server uploads it to Cloudinary and stores the resulting URL. Images must be 2 MB or smaller. A unique 16-digit `f_id` and `status: "active"` are assigned automatically.
+Submit a contact-form feedback. Public — no auth required. Sent as multipart/form-data so an optional `image` file can ride along; the server uploads it to Cloudinary and stores the resulting URL. Images must be 2 MB or smaller. A unique 16-digit `f_id` and `status: "active"` are assigned automatically. Rate limited to 5 submissions / hour per IP — tighter than the global budget, to keep spam out of the inbox.
 
 **Auth required:** No
 
@@ -555,6 +556,7 @@ Submit a contact-form feedback. Public — no auth required. Sent as multipart/f
 | --- | --- |
 | 201 | Created |
 | 400 | Validation failed or image is larger than 2 MB |
+| 429 | Rate limit exceeded — 5 submissions/hour per IP |
 
 #### GET /api/feedback
 

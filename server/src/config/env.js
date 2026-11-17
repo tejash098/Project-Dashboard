@@ -166,6 +166,17 @@ const config = Object.freeze({
   chatBurstWindowSeconds: 60, // CHAT_RATE_LIMIT_WINDOW
   chatHourlyMax: 10, // CHAT_HOURLY_MAX
   chatHourlyWindowSeconds: 3600,
+
+  // ── Login + feedback rate limiting (layered on top of the global limiter) ──
+  // Fixed here for the same reason as the chat budgets: these are safety
+  // limits on public endpoints, not per-deployment tuning knobs.
+  // Login: the global 15/60s alone allows ~21,600 password guesses a day.
+  loginMax: 5,
+  loginWindowSeconds: 900, // 15 minutes
+  // Feedback: each submission is a database write and, optionally, a 2 MB
+  // image upload to Cloudinary. A real visitor sends one or two.
+  feedbackMax: 5,
+  feedbackWindowSeconds: 3600,
 });
 
 export default config;

@@ -23,8 +23,18 @@ vi.mock("../config/cloudinary.js", () => ({
 
 // Imported after the mocks are registered, and app.js rather than server.js:
 // server.js binds a port and opens its own database connection at import.
-const request = (await import("supertest")).default;
+const supertest = (await import("supertest")).default;
 const app = (await import("../app.js")).default;
+
+/**
+ * Each request gets its own client IP. The global limiter counts in memory when
+ * Redis is absent (which it is here), and this file sends more requests than
+ * the 15/60s budget — so from a single IP the later tests would see 429s.
+ * app.js sets `trust proxy`, which is what makes X-Forwarded-For become req.ip.
+ */
+let ipCounter = 0;
+const request = (target) =>
+  supertest.agent(target).set("X-Forwarded-For", `198.51.100.${(ipCounter += 1)}`);
 const Project = (await import("../models/Project.js")).default;
 
 /** A token the auth middleware will accept, signed with the test secret. */

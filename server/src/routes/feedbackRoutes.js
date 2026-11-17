@@ -8,6 +8,8 @@ import {
   deleteFeedback,
 } from "../controllers/feedbackController.js";
 import { auth } from "../middleware/auth.js";
+import { createRateLimit } from "../middleware/rateLimit.js";
+import config from "../config/env.js";
 
 /**
  * Router for feedback (contact-form) resources. Mounted under `/api/feedback`
@@ -40,7 +42,20 @@ const uploadFeedbackImage = (req, res, next) => {
   });
 };
 
-router.post("/", uploadFeedbackImage, createFeedback); // public
+/**
+ * Spam guard for the public submit route — 5 submissions per hour per IP,
+ * stacked on top of the global limiter. Counts in Redis, falling back to
+ * process memory when Redis is unavailable.
+ */
+const feedbackLimit = createRateLimit({
+  max: config.feedbackMax,
+  windowSeconds: config.feedbackWindowSeconds,
+  prefix: "feedback-limit",
+  fallbackInMemory: true,
+});
+
+// The limiter runs before multer so a rejected request never parses an upload.
+router.post("/", feedbackLimit, uploadFeedbackImage, createFeedback); // public
 router.get("/", auth, getAllFeedback); // protected
 router.get("/:id", auth, getFeedbackByFId); // protected — `:id` is the f_id
 // `:id` carries the feedback's f_id (not the Mongo _id); see the controller.
