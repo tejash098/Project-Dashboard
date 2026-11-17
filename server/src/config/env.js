@@ -43,6 +43,11 @@ const config = Object.freeze({
 
   // ── Database ──
   mongodbUri: required("MONGODB_URI"),
+  // Database to use on that cluster. Passed to the driver as `dbName`, which
+  // takes precedence over any name in the URI path. Set here rather than left
+  // to the URI because a URI with no path silently lands in MongoDB's default
+  // database, "test" — which is where this app's data lived until this existed.
+  mongodbDbName: process.env.MONGODB_DB_NAME || "project-dashboard",
   // Public resolvers for mongodb+srv SRV/TXT lookups, which the local resolver refused.
   dnsServers: ["1.1.1.1", "8.8.8.8"],
   // Pinned MongoDB Stable API so server upgrades can't silently change behavior.

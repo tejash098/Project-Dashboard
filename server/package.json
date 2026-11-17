@@ -9,6 +9,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed:techstacks": "node src/scripts/seedTechStacks.js",
+    "copy:db": "node src/scripts/copyDatabase.js",
     "build": "echo \"No build step required for server\""
   },
   "author": "",
